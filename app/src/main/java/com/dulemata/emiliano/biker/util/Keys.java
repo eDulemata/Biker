@@ -1,0 +1,56 @@
+package com.dulemata.emiliano.biker.util;
+
+import android.graphics.Color;
+
+/**
+ * Created by Emiliano on 11/03/2017.
+ */
+
+public class Keys {
+    public static final int VERDE = Color.rgb(76, 175, 80);
+    public static final int ROSSO = Color.rgb(229, 57, 53);
+    public static final String PERCORSO = "PERCORSO";
+    public static final float SPESSORE_LINEA = 20;
+    public static final String URL_SERVER = "http://pinbike.altervista.org/";
+    public static final String SHARED_PREFERENCIES = "biker_preferences";
+    public static final String UTENTE = "utente";
+
+    public static final String PASSWORD = "password";
+    public static final String JSON_UTENTE = "utente";
+    public static final String JSON_RESULT = "result";
+    public static final String LATITUDE = "latitudine";
+    public static final String LONGITUDINE = "longitudine";
+    public static final String DATA = "data";
+    public static final String VELOCITA_ISTANTANEA = "velocitaIstantanea";
+    public static final String ALTITUDINE = "altitudine";
+    public static final String DISTANZA_PARZIALE = "distanzaParziale";
+    public static final String AUTO_LOGIN = "save_credentials";
+    public static final String JSON_PERCORSI = "percorsi";
+    public static final String ID_PERCORSO = "idPercorso";
+    public static final String DISTANZA_TOTALE = "distanzaTotale";
+    public static final String VELOCITA_MEDIA = "velocitaMedia";
+    public static final String ALTITUDINE_MEDIA = "altitudineMedia";
+    public static final String PUNTI_GUADAGNATI = "puntiGuadagnati";
+    public static final String POSIZIONI = "posizioni";
+
+    //login
+    public static final String ID = "id";
+    public static final String EMAIL = "email";
+    public static final String PUNTEGGIO = "punteggio";
+    public static final String PERCORSI = "num_percorsi";
+    public static final String MENU_ITEM = "item_menu";
+
+    public static final String PERCORSO_PARZIALE_TRACKER = "percorso_parziale";
+    public static final String A_FRAGMENT = "aFragment";
+    public static final String JSON_OK = "ok";
+    public static final String POSIZIONE_NETWORK = "posizione_network";
+    public static final String POSIZIONE = "posizione";
+    public static final String PERCORSO_PARZIALE_SERVICE = "percorso_parziale_service";
+    public static final String PERCORSO_COMPLETO_SERVICE = "percorso_completo_service";
+    public static final String PERCORSO_COMPLETO = "percorso_completo";
+    public static final String POSIZIONE_GPS = "posizione_gps";
+    public static final String SHOW_NOTIFICA = "show_notifica";
+    public static final String REMOVE_NOTIFICA = "remove_notifica";
+    public static final String OLD_POS = "old_pos";
+    public static final String OPTIONS = "polyline_options";
+}

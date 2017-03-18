@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/tracker"
+            android:icon="@drawable/ic_menu_tracker"
+            android:title="@string/start_itinerary" />
+        <item
+            android:id="@+id/profile"
+            android:icon="@drawable/ic_menu_profile"
+            android:title="@string/go_to_your_profile" />
+        <item
+            android:id="@+id/history"
+            android:icon="@drawable/ic_menu_history"
+            android:title="@string/history" />
+    </group>
+
+</menu>

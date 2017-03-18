@@ -27,9 +27,6 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-/**
- * Created by Emiliano on 12/03/2017.
- */
 
 public class ServiceGPS extends Service implements LocationListener {
 
@@ -42,9 +39,8 @@ public class ServiceGPS extends Service implements LocationListener {
         public void onConnected(@Nullable Bundle bundle) {
             if (mLocationRequest == null) {
                 mLocationRequest = new LocationRequest()
-                        .setInterval(3000)
-                        .setMaxWaitTime(5000)
-                        //.setSmallestDisplacement(10)
+                        .setInterval(5000)
+                        .setSmallestDisplacement(30)
                         .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
             }
             //noinspection MissingPermission
@@ -146,32 +142,24 @@ public class ServiceGPS extends Service implements LocationListener {
         }
     }
 
-    private Posizione oldPos;
+    private Location oldPos;
 
     @Override
     public void onLocationChanged(final Location location) {
-        if (thread == null) {
-            thread = new Thread() {
-                @Override
-                public void run() {
-                    //if (oldPos == null)
-                     //   oldPos = new Posizione(location);
-                   // else if (oldPos.latitude == location.getLatitude() && oldPos.longitude == location.getLongitude())
-                    //    return;
-                    Posizione posizione = new Posizione(location);
-                    aPercorso.addPosizione(posizione);
-                    int puntiGuadagnati = aPercorso.puntiGuadagnati;
-                    double distanza = aPercorso.distanzaTotale;
-                    Intent intent = new Intent(Keys.POSIZIONE_GPS);
-                    intent.setAction(Keys.POSIZIONE_GPS);
-                    intent.putExtra(Keys.POSIZIONE, posizione);
-                    intent.putExtra(Keys.PUNTI_GUADAGNATI, puntiGuadagnati);
-                    intent.putExtra(Keys.DISTANZA_PARZIALE, distanza);
-                    sendBroadcast(intent);
-                }
-            };
+        if (oldPos == null)
+            oldPos = location;
+        else if (oldPos.getLatitude() != location.getLatitude() || oldPos.getLongitude() != location.getLongitude()) {
+            oldPos = location;
+            Posizione posizione = new Posizione(location);
+            aPercorso.addPosizione(posizione);
+            int puntiGuadagnati = aPercorso.puntiGuadagnati;
+            double distanza = aPercorso.distanzaTotale;
+            Intent intent = new Intent(Keys.POSIZIONE_GPS);
+            intent.putExtra(Keys.POSIZIONE, posizione);
+            intent.putExtra(Keys.PUNTI_GUADAGNATI, puntiGuadagnati);
+            intent.putExtra(Keys.DISTANZA_PARZIALE, distanza);
+            sendBroadcast(intent);
         }
-        thread.run();
     }
 
     private class TrackingNotification {

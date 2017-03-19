@@ -27,6 +27,9 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+/**
+ * Created by Emiliano on 12/03/2017.
+ */
 
 public class ServiceGPS extends Service implements LocationListener {
 
@@ -39,8 +42,9 @@ public class ServiceGPS extends Service implements LocationListener {
         public void onConnected(@Nullable Bundle bundle) {
             if (mLocationRequest == null) {
                 mLocationRequest = new LocationRequest()
-                        .setInterval(5000)
-                        .setSmallestDisplacement(30)
+                        .setInterval(3000)
+                        .setMaxWaitTime(5000)
+                        //.setSmallestDisplacement(10)
                         .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
             }
             //noinspection MissingPermission
@@ -145,21 +149,25 @@ public class ServiceGPS extends Service implements LocationListener {
     private Location oldPos;
 
     @Override
-    public void onLocationChanged(final Location location) {
-        if (oldPos == null)
-            oldPos = location;
-        else if (oldPos.getLatitude() != location.getLatitude() || oldPos.getLongitude() != location.getLongitude()) {
-            oldPos = location;
-            Posizione posizione = new Posizione(location);
-            aPercorso.addPosizione(posizione);
-            int puntiGuadagnati = aPercorso.puntiGuadagnati;
-            double distanza = aPercorso.distanzaTotale;
-            Intent intent = new Intent(Keys.POSIZIONE_GPS);
-            intent.putExtra(Keys.POSIZIONE, posizione);
-            intent.putExtra(Keys.PUNTI_GUADAGNATI, puntiGuadagnati);
-            intent.putExtra(Keys.DISTANZA_PARZIALE, distanza);
-            sendBroadcast(intent);
+    public void onLocationChanged(Location location) {
+        if (oldPos == null) {
+            sendLocation(location);
+        } else if (oldPos.getLatitude() != location.getLatitude() || oldPos.getLongitude() != location.getLongitude()) {
+            sendLocation(location);
         }
+        oldPos = location;
+    }
+
+    public void sendLocation(Location location) {
+        Posizione posizione = new Posizione(location);
+        aPercorso.addPosizione(posizione);
+        int puntiGuadagnati = aPercorso.puntiGuadagnati;
+        double distanza = aPercorso.distanzaTotale;
+        Intent intent = new Intent(Keys.POSIZIONE_GPS);
+        intent.putExtra(Keys.POSIZIONE, posizione);
+        intent.putExtra(Keys.PUNTI_GUADAGNATI, puntiGuadagnati);
+        intent.putExtra(Keys.DISTANZA_PARZIALE, distanza);
+        sendBroadcast(intent);
     }
 
     private class TrackingNotification {

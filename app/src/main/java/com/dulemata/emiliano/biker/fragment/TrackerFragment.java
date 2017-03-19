@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,10 +55,8 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     private TrackerProperty velocità, altitudine, distanza, punti;
     private PolylineOptions options;
     private Button tracking_button;
-    private CheckBox fake;
     private BroadcastReceiver receiver;
     private Intent intentGps, intentNetwork, getPercorso;
-    private double counter;
     private LatLng oldPos;
 
     public TrackerFragment() {
@@ -105,24 +102,20 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
                             rimuoviNotifica();
                             break;
                         case Keys.POSIZIONE_NETWORK:
-                            Log.i(Keys.POSIZIONE_NETWORK,"inizio");
                             posizione = intent.getParcelableExtra(Keys.POSIZIONE);
                             LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
                             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM));
-                            Log.i(Keys.POSIZIONE_NETWORK,"fine");
                             break;
                         case Keys.PERCORSO_COMPLETO_SERVICE:
                             percorso = intent.getParcelableExtra(Keys.PERCORSO_COMPLETO);
                             startSavePercorso(percorso);
                             break;
                         case Keys.POSIZIONE_GPS:
-                            Log.i(Keys.POSIZIONE_GPS,"inizio");
                             setOptions();
                             posizione = intent.getParcelableExtra(Keys.POSIZIONE);
                             int punti = intent.getIntExtra(Keys.PUNTI_GUADAGNATI, -1);
                             double distanza = intent.getDoubleExtra(Keys.DISTANZA_PARZIALE, -1);
                             aggiornaTracking(posizione, distanza, punti);
-                            Log.i(Keys.POSIZIONE_GPS,"fine");
                             break;
                     }
                 }
@@ -151,13 +144,11 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     }
 
     private void aggiornaTracking(Posizione posizione, double distanza, int punti) {
-        Log.i("Aggiorna tracking","inizio");
         velocità.update(posizione.velocitàIstantanea);
         this.distanza.update(distanza);
         this.punti.update(punti);
         altitudine.update(posizione.altitudine);
         addPosizione(posizione);
-        Log.i("Aggiorna tracking","fine");
     }
 
     private void startSavePercorso(Percorso percorso) {
@@ -210,11 +201,6 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     }
 
     private void addPosizione(Posizione posizione) {
-        if (fake.isChecked()) {
-            posizione.latitude = posizione.latitude + 0.005 * counter;
-            posizione.longitude = posizione.longitude + 0.005 * counter;
-            counter++;
-        }
         LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
         options.add(latLng);
         mGoogleMap.addPolyline(options);
@@ -262,7 +248,6 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
                     isTracking = false;
                     stopTracking();
                     setButton();
-                    counter = 0;
                     mGoogleMap.clear();
                     options = null;
                 } else {
@@ -273,7 +258,6 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
             }
 
         });
-        fake = (CheckBox) v.findViewById(R.id.fake_positions);
         setButton();
         return v;
     }

@@ -29,7 +29,6 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
 
     private static final String SALVA_PERCORSO = "salva_percorso.php";
     Utente utente;
-    private int punteggioPercorso;
     TextView data, oraInizio, oraFine;
     TrackerProperty trackerProperty1, trackerProperty2, trackerProperty3, trackerProperty4;
     Button save, discard;
@@ -74,7 +73,6 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
         discard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent data = new Intent();
                 setResult(RESULT_CANCELED);
                 finish();
             }
@@ -86,7 +84,6 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
         utente = getIntent().getParcelableExtra(Keys.UTENTE);
         int numUtente = utente.idUtente;
         int numPercorso = utente.percorsiUtente;
-        utente.punteggioUtente = utente.punteggioUtente + punteggioPercorso;
         try {
             String json = "{\"posizioni\":" + aPercorso.toJsonArray().toString() + "}";
             json = json.trim();
@@ -96,7 +93,7 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
                     "&distanza_totale=" + aPercorso.distanzaTotale +
                     "&velocita_media=" + aPercorso.velocitàMedia +
                     "&altitudine_media=" + aPercorso.altitudineMedia +
-                    "&punti_guadagnati=" + punteggioPercorso +
+                    "&punti_guadagnati=" + aPercorso.puntiGuadagnati +
                     "&json=" + json;
             request.execute(url, Keys.JSON_RESULT);
         } catch (JSONException e) {
@@ -108,7 +105,7 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
     public void processResult(JSONArray result) {
         Intent data = new Intent();
         if (result != null && result.length() == 1) {
-            utente.punteggioUtente = utente.punteggioUtente + punteggioPercorso;
+            utente.punteggioUtente = utente.punteggioUtente + aPercorso.puntiGuadagnati;
             utente.percorsiUtente = utente.percorsiUtente + 1;
             data.putExtra(Keys.UTENTE, utente);
             setResult(RESULT_OK, data);
@@ -121,7 +118,7 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        PolylineOptions options = new PolylineOptions().color(Keys.VERDE).width(Keys.SPESSORE_LINEA);
+        PolylineOptions options = new PolylineOptions().color(Keys.VERDE).width(Keys.SPESSORE_LINEA_RIDOTTO);
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (Object posizione : aPercorso) {
             LatLng ll = new LatLng(((Posizione) posizione).latitude, ((Posizione) posizione).longitude);

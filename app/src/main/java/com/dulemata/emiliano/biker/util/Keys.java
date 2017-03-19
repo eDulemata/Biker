@@ -53,4 +53,5 @@ public class Keys {
     public static final String REMOVE_NOTIFICA = "remove_notifica";
     public static final String OLD_POS = "old_pos";
     public static final String OPTIONS = "polyline_options";
+    public static final float SPESSORE_LINEA_RIDOTTO = 10;
 }

@@ -97,18 +97,6 @@
         app:layout_constraintBottom_toTopOf="@+id/guideline5"
         app:layout_constraintTop_toTopOf="@+id/guideline" />
 
-    <CheckBox
-        android:id="@+id/fake_positions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:text="@string/fake_positions"
-        android:textColorLink="@android:color/black"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="8dp"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintLeft_toLeftOf="@+id/guideline2" />
-
     <Button
         android:id="@+id/button_tracking"
         android:layout_width="0dp"

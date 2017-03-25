@@ -57,8 +57,34 @@
         <activity
             android:name=".SavePercorsoActivity"
             android:parentActivityName=".MainActivity" />
-
         <activity android:name=".PercorsoActivity" />
+        <activity
+            android:name=".PremioListActivity"
+            android:label="@string/title_premio_list"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dulemata.emiliano.biker.MainActivity" />
+        </activity>
+        <activity
+            android:name=".PremioDetailActivity"
+            android:label="@string/title_premio_detail"
+            android:parentActivityName=".PremioListActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dulemata.emiliano.biker.PremioListActivity" />
+        </activity>
+        <activity
+            android:name=".PremiActivity"
+            android:label="@string/title_activity_premi"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dulemata.emiliano.biker.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

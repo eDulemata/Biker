@@ -2,6 +2,7 @@ package com.dulemata.emiliano.biker;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
 import android.widget.TextView;
 
 import com.dulemata.emiliano.biker.data.FuoriPercorsoException;
@@ -25,7 +26,6 @@ public class PercorsoActivity extends AppCompatActivity implements OnMapReadyCal
     TextView data, oraInizio, oraFine;
     TrackerProperty trackerProperty1, trackerProperty2, trackerProperty3, trackerProperty4;
     Percorso aPercorso;
-    private GoogleMap mGoogleMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,19 +56,20 @@ public class PercorsoActivity extends AppCompatActivity implements OnMapReadyCal
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mGoogleMap = googleMap;
-        PolylineOptions options = new PolylineOptions().color(Keys.VERDE).width(Keys.SPESSORE_LINEA);
+        PolylineOptions options = new PolylineOptions().color(Keys.VERDE).width(Keys.SPESSORE_LINEA/3);
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (Object posizione : aPercorso) {
             LatLng ll = new LatLng(((Posizione) posizione).latitude, ((Posizione) posizione).longitude);
             builder.include(ll);
             options.add(ll);
         }
-        mGoogleMap.getUiSettings().setMapToolbarEnabled(false);
-        mGoogleMap.getUiSettings().setAllGesturesEnabled(false);
-        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        googleMap.getUiSettings().setMapToolbarEnabled(false);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         LatLngBounds bounds = builder.build();
-        mGoogleMap.addPolyline(options);
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+        googleMap.addPolyline(options);
+        Display display = getWindowManager().getDefaultDisplay();
+        int width = display.getWidth();
+        int height = display.getHeight();
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, width, height, 15));
     }
 }

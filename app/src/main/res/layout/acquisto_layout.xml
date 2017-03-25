@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background_white_rounded"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/nome_acquisto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:text="TextView"
+        android:textAlignment="center"
+        android:textColor="@color/primary_text"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textView11"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/nome_acquisto"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:text="@string/data_acquisto"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/data_acquisto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/textView11"
+        android:layout_alignBottom="@+id/textView11"
+        android:text="TextView"
+        android:textSize="18sp"
+        android:layout_alignEnd="@+id/nome_acquisto"
+        android:layout_toEndOf="@+id/textView14" />
+
+    <TextView
+        android:id="@+id/textView14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/textView11"
+        android:layout_below="@+id/textView11"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:text="@string/costo_premio"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/valore_premio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/data_acquisto"
+        android:layout_alignTop="@+id/textView14"
+        android:text="TextView"
+        android:textSize="18sp"
+        android:layout_toEndOf="@+id/textView14" />
+
+    <TextView
+        android:id="@+id/textView16"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/textView14"
+        android:layout_below="@+id/textView14"
+        android:layout_marginBottom="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="@dimen/activity_horizontal_margin"
+        android:text="@string/negozio"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/negozio_acquisto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/textView16"
+        android:layout_alignStart="@+id/valore_premio"
+        android:text="TextView"
+        android:textSize="18sp"
+        android:layout_alignEnd="@+id/valore_premio" />
+</RelativeLayout>

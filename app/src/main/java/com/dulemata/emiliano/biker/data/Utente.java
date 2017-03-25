@@ -1,5 +1,6 @@
 package com.dulemata.emiliano.biker.data;
 
+import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -32,8 +33,12 @@ public class Utente implements Parcelable {
     public int percorsiUtente;
     boolean cambiato = false;
 
-    public Utente(int id, String email, String password, int punteggio, int percorsi) {
-
+    public Utente(SharedPreferences preferences) {
+        idUtente = preferences.getInt(Keys.ID, -1);
+        emailUtente = preferences.getString(Keys.EMAIL, "");
+        passwordUtente = preferences.getString(Keys.PASSWORD, "");
+        punteggioUtente = preferences.getInt(Keys.PUNTEGGIO, -1);
+        percorsiUtente = preferences.getInt(Keys.NUMERO_PERCORSI, -1);
     }
 
     public Utente(JSONObject utente) throws JSONException {

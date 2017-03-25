@@ -7,7 +7,7 @@
     tools:context="com.dulemata.emiliano.biker.SplashActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
+         is needed to present your nome_premio, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
 
     <!-- This FrameLayout insets its children based on system windows using
@@ -31,12 +31,4 @@
         android:layout_marginBottom="64dp"
         android:layout_marginLeft="64dp" />
 
-    <Button
-        android:id="@+id/temp_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Button"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
-        tools:layout_editor_absoluteX="147dp" />
 </android.support.constraint.ConstraintLayout>

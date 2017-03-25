@@ -2,30 +2,32 @@ package com.dulemata.emiliano.biker.connectivity;
 
 import android.os.AsyncTask;
 
+import com.dulemata.emiliano.biker.util.Keys;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-//import com.google.gson.JsonObject;
-
 /**
- * Created by Emiliano on 06/03/2017.
+ * Created by Emiliano on 21/03/2017.
  */
 
-public class BackgroundHTTPRequest extends AsyncTask<String, Integer, JSONArray> {
-
+public class BackgroundHTTPRequestPost extends AsyncTask<String, Void, JSONArray> {
     private AsyncResponse delegate;
     private HttpURLConnection connection = null;
 
-    public BackgroundHTTPRequest(AsyncResponse delegate) {
+    public BackgroundHTTPRequestPost(AsyncResponse delegate) {
         this.delegate = delegate;
     }
 
@@ -33,10 +35,11 @@ public class BackgroundHTTPRequest extends AsyncTask<String, Integer, JSONArray>
     protected JSONArray doInBackground(String... params) {
         JSONArray jsonArray = null;
         try {
-            URL aUrl = new URL(params[0]);
-            JSONObject json = getJsonObject(aUrl);
+            URL aUrl = new URL(params[Keys.URL_STRING]);
+            String body = params[Keys.BODY_POST];
+            JSONObject json = getJsonObject(aUrl, body);
             if (json != null)
-                jsonArray = json.getJSONArray(params[1]);
+                jsonArray = json.getJSONArray(params[2]);
         } catch (MalformedURLException | JSONException e) {
             e.printStackTrace();
         }
@@ -44,15 +47,23 @@ public class BackgroundHTTPRequest extends AsyncTask<String, Integer, JSONArray>
         return jsonArray;
     }
 
-    private JSONObject getJsonObject(URL url) {
+    private JSONObject getJsonObject(URL url, String json) {
         JSONObject object = null;
 
         try {
             connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("Content-Type", "text/plain; charset=utf-8");
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded ; charset=utf-8");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
             connection.connect();
+            OutputStream outputStream = connection.getOutputStream();
+            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+            bufferedWriter.write(json);
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            outputStream.close();
             int status = connection.getResponseCode();
             switch (status) {
                 case 200:
@@ -80,4 +91,3 @@ public class BackgroundHTTPRequest extends AsyncTask<String, Integer, JSONArray>
         delegate.processResult(utente);
     }
 }
-

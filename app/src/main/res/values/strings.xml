@@ -12,7 +12,7 @@
     <string name="logout">logout</string>
     <string name="start_itinerary">Start Itinerary</string>
     <string name="go_to_your_profile">Go to your Profile</string>
-    <string name="history">History</string>
+    <string name="history">Tracking History</string>
     <string name="username" translatable="false">Username</string>
     <string name="password" translatable="false">Password</string>
     <string name="save_credentials">save credentials</string>
@@ -70,5 +70,19 @@
     <string name="notification_message">Biker is tracking you</string>
     <string name="close">Close</string>
     <string name="continua">Continue</string>
+    <string name="time_start">Started at:</string>
+    <string name="time_end">Ended at:</string>
+    <string name="negozi">Shops</string>
+    <string name="title_premio_list">Rewards</string>
+    <string name="title_premio_detail">Reward Detail</string>
+    <string name="compra_premio">BUY</string>
+    <string name="see_rewards">See Rewards</string>
+    <string name="title_activity_premi">Rewards</string>
+    <string name="price">Price</string>
+    <string name="quantità">Remaining</string>
+    <string name="data_acquisto">Purchase date:</string>
+    <string name="costo_premio">Reward price:</string>
+    <string name="negozio">Shop:</string>
+    <string name="acquisti">Rewards History</string>
 
 </resources>

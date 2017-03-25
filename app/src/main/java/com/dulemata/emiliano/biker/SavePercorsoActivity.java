@@ -1,18 +1,23 @@
 package com.dulemata.emiliano.biker;
 
-import android.content.Intent;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
-import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequest;
+import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
+import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestPost;
 import com.dulemata.emiliano.biker.data.FuoriPercorsoException;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;
 import com.dulemata.emiliano.biker.data.Utente;
+import com.dulemata.emiliano.biker.fragment.TrackerFragment;
 import com.dulemata.emiliano.biker.util.Keys;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -25,21 +30,93 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class SavePercorsoActivity extends AppCompatActivity implements AsyncResponse, OnMapReadyCallback {
+import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
+
+public class SavePercorsoActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final String SALVA_PERCORSO = "salva_percorso.php";
+    private static final String AGGIORNA_UTENTE = "aggiorna_utente.php";
+    private SupportMapFragment mappaPercorso;
     Utente utente;
     TextView data, oraInizio, oraFine;
     TrackerProperty trackerProperty1, trackerProperty2, trackerProperty3, trackerProperty4;
     Button save, discard;
     Percorso aPercorso;
-    private GoogleMap mGoogleMap;
-    private SupportMapFragment mappaPercorso;
+    private SharedPreferences preferences;
+    private AlertDialog dialog;
+    private AsyncResponse aggiornaUtenteResponse = new AsyncResponse() {
+        @Override
+        public void processResult(JSONArray result) {
+            try {
+                if (result != null && result.getJSONObject(0).getString(Keys.JSON_RESULT).equals(Keys.JSON_OK)) {
+                    onBackPressed();
+                } else {
+                    dialog = showAlert(SavePercorsoActivity.this,
+                            dialog,
+                            "Errore",
+                            "C'è stato un errore durante l'aggiornamento del profilo",
+                            false)
+                            .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    aggiornaUtente();
+                                }
+                            }).setNegativeButton("Annulla", null).create();
+                    dialog.show();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+    private AsyncResponse savePercorsoResponse = new AsyncResponse() {
+        @Override
+        public void processResult(JSONArray result) {
+            if (result != null && result.length() == 1) {
+                aggiornaUtente();
+            } else {
+                dialog = showAlert(SavePercorsoActivity.this,
+                        dialog,
+                        "Errore",
+                        "C'è stato un errore durante il salvataggio del percorso",
+                        false)
+                        .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                savePercorso();
+                            }
+                        }).setNegativeButton("Annulla", null).create();
+                dialog.show();
+            }
+        }
+    };
+
+    public void aggiornaUtente() {
+        dialog = showAlert(SavePercorsoActivity.this, dialog, "", "Aggiornamento profilo", false).create();
+        dialog.show();
+        if (preferences == null)
+            preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
+        if (utente == null)
+            utente = new Utente(preferences);
+        SharedPreferences.Editor editor = preferences.edit();
+        utente.punteggioUtente = utente.punteggioUtente + aPercorso.puntiGuadagnati;
+        utente.percorsiUtente = utente.percorsiUtente + 1;
+        editor.putInt(Keys.PUNTEGGIO, utente.punteggioUtente);
+        editor.putInt(Keys.NUMERO_PERCORSI, utente.percorsiUtente);
+        editor.apply();
+        BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(aggiornaUtenteResponse);
+        request.execute(Keys.URL_SERVER + AGGIORNA_UTENTE +
+                "?id_utente=" + utente.idUtente +
+                "&punteggio=" + utente.punteggioUtente +
+                "&percorsi=" + utente.percorsiUtente, Keys.JSON_RESULT);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.save_percorso);
+        TrackerFragment.isTracking = false;
+        preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
         mappaPercorso = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mappaPercorso != null)
             mappaPercorso.getMapAsync(this);
@@ -80,44 +157,31 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
     }
 
     private void savePercorso() {
-        BackgroundHTTPRequest request = new BackgroundHTTPRequest(this);
-        utente = getIntent().getParcelableExtra(Keys.UTENTE);
-        int numUtente = utente.idUtente;
+        dialog = showAlert(this, dialog, "", "Salvataggio percorso in corso...", false).create();
+        dialog.show();
+        BackgroundHTTPRequestPost request = new BackgroundHTTPRequestPost(savePercorsoResponse);
+        utente = new Utente(preferences);
+        int idUtente = utente.idUtente;
         int numPercorso = utente.percorsiUtente;
         try {
-            String json = "{\"posizioni\":" + aPercorso.toJsonArray().toString() + "}";
-            json = json.trim();
-            String url = Keys.URL_SERVER + SALVA_PERCORSO +
-                    "?id_percorso=" + numPercorso +
-                    "&id_utente=" + numUtente +
-                    "&distanza_totale=" + aPercorso.distanzaTotale +
-                    "&velocita_media=" + aPercorso.velocitàMedia +
-                    "&altitudine_media=" + aPercorso.altitudineMedia +
-                    "&punti_guadagnati=" + aPercorso.puntiGuadagnati +
-                    "&json=" + json;
-            request.execute(url, Keys.JSON_RESULT);
+            String body = aPercorso.toJsonObject(idUtente, numPercorso).toString();
+            body = body.trim();
+            String url = Keys.URL_SERVER + SALVA_PERCORSO;
+            request.execute(url, body, Keys.JSON_RESULT);
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void processResult(JSONArray result) {
-        Intent data = new Intent();
-        if (result != null && result.length() == 1) {
-            utente.punteggioUtente = utente.punteggioUtente + aPercorso.puntiGuadagnati;
-            utente.percorsiUtente = utente.percorsiUtente + 1;
-            data.putExtra(Keys.UTENTE, utente);
-            setResult(RESULT_OK, data);
-        } else {
-            setResult(RESULT_FIRST_USER, data);
-        }
-        finish();
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dialog != null)
+            dialog.dismiss();
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mGoogleMap = googleMap;
         PolylineOptions options = new PolylineOptions().color(Keys.VERDE).width(Keys.SPESSORE_LINEA_RIDOTTO);
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (Object posizione : aPercorso) {
@@ -126,15 +190,19 @@ public class SavePercorsoActivity extends AppCompatActivity implements AsyncResp
             options.add(ll);
         }
         LatLngBounds bounds = builder.build();
-        mGoogleMap.addPolyline(options);
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
-        mGoogleMap.getUiSettings().setMapToolbarEnabled(false);
-        mGoogleMap.getUiSettings().setAllGesturesEnabled(false);
-        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        googleMap.addPolyline(options);
+        googleMap.getUiSettings().setMapToolbarEnabled(false);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
             }
         });
+        Display display = getWindowManager().getDefaultDisplay();
+        int width = display.getWidth();
+        int height = display.getHeight();
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, width, height, 0));
     }
+
+
 }

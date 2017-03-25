@@ -3,45 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary"
+    android:background="@color/almost_white"
     tools:context="com.dulemata.emiliano.biker.fragment.ProfileFragment">
 
-    <Button
-        android:id="@+id/password_button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
-        android:backgroundTint="@color/accent"
-        android:text="@string/modifiy_password"
-        android:textColor="@color/almost_white"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toRightOf="@+id/textView8"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email_input" />
+    <!-- TODO: Update blank fragment layout -->
 
     <TextView
         android:id="@+id/textView7"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
-        android:text="@string/email"
-        app:layout_constraintBaseline_toBaselineOf="@+id/email_input"
-        app:layout_constraintLeft_toLeftOf="parent" />
-
-    <EditText
-        android:id="@+id/email_input"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="0dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
-        android:ems="10"
-        android:inputType="textEmailAddress"
-        app:layout_constraintLeft_toLeftOf="@+id/password_button"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="TextView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        tools:text="@string/email"
+        app:layout_constraintBaseline_toBaselineOf="@+id/email_input" />
 
     <TextView
         android:id="@+id/textView8"
@@ -49,9 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:text="@string/password"
-        app:layout_constraintBaseline_toBaselineOf="@+id/password_input"
-        app:layout_constraintLeft_toLeftOf="parent"
-        tools:layout_editor_absoluteY="65dp" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/password_button"
+        app:layout_constraintLeft_toLeftOf="parent" />
 
     <Button
         android:id="@+id/disiscriviti"
@@ -63,7 +37,7 @@
         android:backgroundTint="@color/accent"
         android:elevation="@dimen/default_elevation"
         android:text="@string/unsubscribe"
-        android:textColor="@color/almost_white"
+        android:textColor="@color/primary_text"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -73,10 +47,10 @@
         android:id="@+id/punti_totali"
         layout="@layout/tracking_attribute"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="65dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -86,20 +60,45 @@
         android:id="@+id/distanza_totale"
         layout="@layout/tracking_attribute"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="65dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginTop="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/punti_totali" />
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline6"
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/password_button"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:backgroundTint="@color/accent"
+        android:elevation="@dimen/default_elevation"
+        android:text="@string/modifiy_password"
+        android:textColor="@color/primary_text"
+        app:layout_constraintLeft_toRightOf="@+id/textView8"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/email_input"
+        app:layout_constraintHorizontal_bias="0.0" />
+
+    <TextView
+        android:id="@+id/email_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:text="TextView"
+        android:textColor="@color/primary_text"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="@+id/password_button"
+        app:layout_constraintRight_toRightOf="@+id/password_button"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

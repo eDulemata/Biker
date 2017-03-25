@@ -1,9 +1,9 @@
 package com.dulemata.emiliano.biker.fragment;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -17,9 +17,10 @@ import com.dulemata.emiliano.biker.MainActivity;
 import com.dulemata.emiliano.biker.PercorsoViewAdapter;
 import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
-import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequest;
+import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.util.Keys;
+import com.dulemata.emiliano.biker.util.LayoutDecoration;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,17 +31,18 @@ import java.util.ArrayList;
 /**
  * A fragment representing a list of Items.
  * <p/>
- * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
+ * Activities containing this fragment MUST implement the {@link OnListPercorsoInteractionListener}
  * interface.
  */
 public class HistoryFragment extends Fragment implements FragmentInt, AsyncResponse {
 
-    private OnListFragmentInteractionListener mListener;
+    private OnListPercorsoInteractionListener mListener;
     private ArrayList<Percorso> mPercorsi;
     private static final String GET_PERCORSI_UTENTE = "get_percorsi_utente.php";
     private WeakReference<MainActivity> reference;
     private RecyclerView recyclerView;
     private AlertDialog dialog;
+    private SharedPreferences preferences;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -57,7 +59,7 @@ public class HistoryFragment extends Fragment implements FragmentInt, AsyncRespo
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-            }
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -72,10 +74,11 @@ public class HistoryFragment extends Fragment implements FragmentInt, AsyncRespo
         if (view instanceof RecyclerView) {
             recyclerView = (RecyclerView) view;
         }
-        BackgroundHTTPRequest request = new BackgroundHTTPRequest(this);
+        preferences = getActivity().getSharedPreferences(Keys.SHARED_PREFERENCIES, Context.MODE_PRIVATE);
+        BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(this);
         if (savedInstanceState == null) {
             mPercorsi = new ArrayList<>();
-            String url = Keys.URL_SERVER + GET_PERCORSI_UTENTE + "?id_utente=" + reference.get().utente.idUtente;
+            String url = Keys.URL_SERVER + GET_PERCORSI_UTENTE + "?id_utente=" + preferences.getInt(Keys.ID, -1);
             request.execute(url, Keys.JSON_PERCORSI);
         } else {
             mPercorsi = savedInstanceState.getParcelableArrayList(Keys.PERCORSI);
@@ -90,10 +93,10 @@ public class HistoryFragment extends Fragment implements FragmentInt, AsyncRespo
         super.onAttach(context);
         reference = new WeakReference<>((MainActivity) context);
         if (context != null) {
-            mListener = (OnListFragmentInteractionListener) context;
+            mListener = (OnListPercorsoInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
+                    + " must implement OnListNegozioInteractionListener");
         }
     }
 
@@ -151,32 +154,9 @@ public class HistoryFragment extends Fragment implements FragmentInt, AsyncRespo
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnListFragmentInteractionListener {
+    public interface OnListPercorsoInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(Percorso item);
+        void onListPercorsoInteraction(Percorso item);
     }
 
-    private class LayoutDecoration extends RecyclerView.ItemDecoration {
-        private int margin;
-
-        /**
-         * constructor
-         *
-         * @param margin desirable margin size in px between the views in the recyclerView
-         */
-        public LayoutDecoration(int margin) {
-            this.margin = margin;
-
-        }
-
-        /**
-         * Set different margins for the items inside the recyclerView: no top margin for the first row
-         * and no left margin for the first column.
-         */
-        @Override
-        public void getItemOffsets(Rect outRect, View view,
-                                   RecyclerView parent, RecyclerView.State state) {
-            outRect.top = margin;
-        }
-    }
 }

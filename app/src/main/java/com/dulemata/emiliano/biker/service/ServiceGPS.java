@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,16 +37,15 @@ public class ServiceGPS extends Service implements LocationListener {
     private Percorso aPercorso;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
-    private Thread thread;
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             if (mLocationRequest == null) {
                 mLocationRequest = new LocationRequest()
-                        .setInterval(3000)
-                        .setMaxWaitTime(5000)
-                        //.setSmallestDisplacement(10)
-                        .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                        .setInterval(10000)
+                        .setMaxWaitTime(15000)
+                        .setSmallestDisplacement(20)
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             }
             //noinspection MissingPermission
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, ServiceGPS.this);
@@ -112,6 +112,16 @@ public class ServiceGPS extends Service implements LocationListener {
                             if (notification != null)
                                 notification.remove();
                             break;
+                        case Keys.END_TRACKING:
+                            risposta = new Intent(getApplication(), SavePercorsoActivity.class);
+                            risposta.putExtra(Keys.PERCORSO, aPercorso);
+                            risposta.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
+                            stackBuilder.addParentStack(MainActivity.class);
+                            stackBuilder.addNextIntent(risposta);
+                            stackBuilder.startActivities();
+                            ServiceGPS.this.stopSelf();
+                            break;
                     }
                 }
             };
@@ -119,6 +129,7 @@ public class ServiceGPS extends Service implements LocationListener {
             filter.addAction(Keys.PERCORSO_PARZIALE_TRACKER);
             filter.addAction(Keys.SHOW_NOTIFICA);
             filter.addAction(Keys.REMOVE_NOTIFICA);
+            filter.addAction(Keys.END_TRACKING);
             registerReceiver(receiver, filter);
         }
         return START_NOT_STICKY;
@@ -152,10 +163,11 @@ public class ServiceGPS extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         if (oldPos == null) {
             sendLocation(location);
-        } else if (oldPos.getLatitude() != location.getLatitude() || oldPos.getLongitude() != location.getLongitude()) {
+            oldPos = location;
+        } else if (calcolaDistanza(oldPos, location) > 20) {
             sendLocation(location);
+            oldPos = location;
         }
-        oldPos = location;
     }
 
     public void sendLocation(Location location) {
@@ -182,9 +194,8 @@ public class ServiceGPS extends Service implements LocationListener {
             riprendiActivity.putExtra(Keys.PERCORSO, aPercorso);
             riprendiActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             PendingIntent tapNotification = PendingIntent.getActivity(applicationContext, 0, riprendiActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-            Intent endTracking = new Intent(getApplicationContext(), SavePercorsoActivity.class);
-            endTracking.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            PendingIntent pulsanteNotifica = PendingIntent.getActivity(applicationContext, 0, endTracking, PendingIntent.FLAG_CANCEL_CURRENT);
+            Intent endTracking = new Intent(Keys.END_TRACKING);
+            PendingIntent pulsanteNotifica = PendingIntent.getBroadcast(applicationContext, 0, endTracking, PendingIntent.FLAG_CANCEL_CURRENT);
             notification = new NotificationCompat.Builder(applicationContext)
                     .setSmallIcon(R.mipmap.ic_launcher_round)
                     .setAutoCancel(true)
@@ -199,6 +210,23 @@ public class ServiceGPS extends Service implements LocationListener {
         void remove() {
             notificationManager.cancel(NOTIFICA_TRACKING);
         }
+    }
+
+    private double calcolaDistanza(Location prev, Location succ) {
+        double distanza = 0;
+        double lat1 = toRadiante(succ.getLatitude());
+        double lat2 = toRadiante(prev.getLatitude());
+        double lng1 = toRadiante(succ.getLongitude());
+        double lng2 = toRadiante(prev.getLongitude());
+        double fi = Math.abs(lng1 - lng2);
+        double p = Math.acos(Math.sin(lat2) * Math.sin(lat1) + Math.cos(lat2) * Math.cos(lat1) * Math.cos(fi));
+        int RAGGIO_TERRA = 6371 * 1000;
+        distanza = p * RAGGIO_TERRA;
+        return distanza;
+    }
+
+    private double toRadiante(double grado) {
+        return (grado * Math.PI) / 180;
     }
 
 }

@@ -86,9 +86,8 @@ public class Posizione implements Parcelable {
     }
 
     public String getDataString() {
-        //TODO controllare
         Locale.getDefault().getDisplayLanguage();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("E, dd MMMM, yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd MMMM, yyyy");
         Date fixDate = new Date(
                 System.currentTimeMillis() - (SystemClock.elapsedRealtimeNanos() / 1000000) + (data / 1000000)
         );

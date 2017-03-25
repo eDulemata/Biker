@@ -54,4 +54,22 @@ public class Keys {
     public static final String OLD_POS = "old_pos";
     public static final String OPTIONS = "polyline_options";
     public static final float SPESSORE_LINEA_RIDOTTO = 10;
+    public static final String NUMERO_PERCORSI = "numero_percorsi_SHP";
+    public static final String END_TRACKING = "end_tracking";
+    public static final int URL_STRING = 0;
+    public static final int BODY_POST = 1;
+    public static final String JSON_NEGOZI = "negozi";
+    public static final String ID_NEGOZIO = "id_negozio";
+    public static final String NOME_NEGOZIO = "nome_negozio";
+    public static final String NEGOZI = "negozi";
+    public static final String JSON_PREMI = "premi";
+    public static final String PREMI = "premi";
+    public static final String ID_PREMIO = "id_premio";
+    public static final String NOME_PREMIO = "nome_premio";
+    public static final String VALORE_PREMIO = "valore";
+    public static final String QUANTITA_PREMIO = "quantita";
+    public static final String NEGOZIO = "negozio";
+    public static final String JSON_ACQUISTI = "acquisti";
+    public static final String ACQUISTI = "acquisti";
+    public static final String VALORE_ACQUISTO = "prezzo_premio";
 }

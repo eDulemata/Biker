@@ -11,9 +11,20 @@
             android:icon="@drawable/ic_menu_profile"
             android:title="@string/go_to_your_profile" />
         <item
+            android:id="@+id/negozi"
+            android:icon="@drawable/ic_acquisti"
+            android:title="@string/negozi" />
+    </group>
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/acquisti"
+            android:icon="@drawable/ic_negozi"
+            android:title="@string/acquisti" />
+        <item
             android:id="@+id/history"
             android:icon="@drawable/ic_menu_history"
             android:title="@string/history" />
+
     </group>
 
 </menu>

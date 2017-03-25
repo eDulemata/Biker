@@ -17,7 +17,7 @@ import java.util.List;
  * Created by Emiliano on 11/03/2017.
  */
 
-public class Percorso implements PercorsoInt, Parcelable {
+public class Percorso implements Parcelable, Iterable {
 
     public static final Creator<Percorso> CREATOR = new Creator<Percorso>() {
         @Override
@@ -69,7 +69,6 @@ public class Percorso implements PercorsoInt, Parcelable {
         in.readTypedList(mPosizioni, Posizione.CREATOR);
     }
 
-    @Override
     public void addPosizione(Object posizione) {
         Posizione p = (Posizione) posizione;
         size++;
@@ -78,11 +77,11 @@ public class Percorso implements PercorsoInt, Parcelable {
             altitudineMedia = p.altitudine;
             sommaAltitudini = p.altitudine;
             puntiGuadagnati = 0;
-            velocitàMedia = p.velocitàIstantanea;
+            velocitàMedia = toKmH(p.velocitàIstantanea);
         } else {
             distanzaTotale = distanzaTotale + calcolaDistanza(mPosizioni.get(size - 2), p);
             sommaAltitudini = sommaAltitudini + p.altitudine;
-            sommaVelocità = sommaVelocità + p.velocitàIstantanea;
+            sommaVelocità = sommaVelocità + toKmH(p.velocitàIstantanea);
             altitudineMedia = sommaAltitudini / size;
             velocitàMedia = sommaVelocità / size;
             puntiGuadagnati = (int) (distanzaTotale * PUNTI_AL_METRO);
@@ -90,7 +89,10 @@ public class Percorso implements PercorsoInt, Parcelable {
         mPosizioni.add(p);
     }
 
-    @Override
+    private double toKmH(double velocità) {
+        return velocità * 3.6;
+    }
+
     public Posizione getPosizione(int i) throws FuoriPercorsoException {
         if (i > size()) {
             throw new FuoriPercorsoException();
@@ -98,21 +100,26 @@ public class Percorso implements PercorsoInt, Parcelable {
         return mPosizioni.get(i);
     }
 
-    @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
-    @Override
-    public JSONArray toJsonArray() throws JSONException {
+    public JSONObject toJsonObject(int id_utente, int id_percorso) throws JSONException {
+        JSONObject object = new JSONObject();
+        object.put(Keys.ID_PERCORSO, id_percorso);
+        object.put(Keys.DISTANZA_TOTALE, distanzaTotale);
+        object.put(Keys.PUNTI_GUADAGNATI, puntiGuadagnati);
+        object.put(Keys.ID, id_utente);
+        object.put(Keys.VELOCITA_MEDIA, velocitàMedia);
+        object.put(Keys.ALTITUDINE_MEDIA, altitudineMedia);
         JSONArray array = new JSONArray();
         for (Posizione posizione : mPosizioni) {
             array.put(posizione.toJsonObject());
         }
-        return array;
+        object.put("json", array);
+        return object;
     }
 
-    @Override
     public int size() {
         return size;
     }

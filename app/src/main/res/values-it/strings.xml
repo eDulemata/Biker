@@ -6,7 +6,7 @@
     <string name="action_settings">Impostazioni</string>
     <string name="start_itinerary">Inizia Percorso</string>
     <string name="go_to_your_profile">Visualizza il tuo profilo</string>
-    <string name="history">Storico</string>
+    <string name="history">Storico Percorsi</string>
     <string name="gps">GPS</string>
     <string name="points_label">Punti:</string>
     <string name="app_name">Biker</string>
@@ -57,7 +57,18 @@
     <string name="cancel">Annulla</string>
     <string name="logout_message">Effettuare il logut?</string>
     <string name="modifiy_password">Modifica password</string>
-    <string name="notification_message">Biker ti sta seguendo</string>
+    <string name="notification_message">Tracking Biker attivo</string>
     <string name="close">Chiudi</string>
     <string name="continua">Continua</string>
+    <string name="time_start">Iniziato alle:</string>
+    <string name="time_end">Finito alle:</string>
+    <string name="negozi">Ottieni premi</string>
+    <string name="compra_premio">COMPRA</string>
+    <string name="see_rewards">See Rewards</string>
+    <string name="price">Price</string>
+    <string name="quantità">Remaining</string>
+    <string name="data_acquisto">Data Acquisto:</string>
+    <string name="costo_premio">Costo Premio:</string>
+    <string name="negozio">Negozio:</string>
+    <string name="acquisti">Storico acquisti</string>
 </resources>

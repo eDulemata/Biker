@@ -5,6 +5,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,14 +20,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 
 import com.dulemata.emiliano.biker.MainActivity;
 import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.SavePercorsoActivity;
 import com.dulemata.emiliano.biker.TrackerProperty;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
-import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequest;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;
 import com.dulemata.emiliano.biker.service.ServiceGPS;
@@ -31,21 +36,21 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 
 import java.lang.ref.WeakReference;
 
-import static android.app.Activity.RESULT_CANCELED;
-import static android.app.Activity.RESULT_OK;
+import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
 
 public class TrackerFragment extends Fragment implements FragmentInt, OnMapReadyCallback, AsyncResponse {
 
     private static final int SALVATAGGIO_UTENTE = 23;
-    private static final String AGGIORNA_PUNTEGGIO = "aggiorna_punteggio.php";
     public static final int ZOOM = 18;
     public static final int TILT = 55;
     private GoogleMap mGoogleMap;
@@ -58,6 +63,7 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     private BroadcastReceiver receiver;
     private Intent intentGps, intentNetwork, getPercorso;
     private LatLng oldPos;
+    private MarkerOptions mMarkerOption;
 
     public TrackerFragment() {
         // Required empty public constructor
@@ -100,10 +106,12 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
                             isTracking = true;
                             setButton();
                             rimuoviNotifica();
+                            getActivity().stopService(intentNetwork);
                             break;
                         case Keys.POSIZIONE_NETWORK:
                             posizione = intent.getParcelableExtra(Keys.POSIZIONE);
                             LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
+                            setMarker(latLng, muoviCamera(latLng));
                             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM));
                             break;
                         case Keys.PERCORSO_COMPLETO_SERVICE:
@@ -132,6 +140,26 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
         getActivity().sendBroadcast(getPercorso);
     }
 
+    private void setMarker(LatLng posizione, float v) {
+        mGoogleMap.clear();
+        int icon_dimen = getView().findViewById(R.id.map).getWidth() / 10;
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.navigation_icon);
+        Bitmap resized = Bitmap.createScaledBitmap(bitmap, icon_dimen, icon_dimen, false);
+        Paint paint = new Paint();
+        ColorFilter filter = new PorterDuffColorFilter(Keys.VERDE, PorterDuff.Mode.SRC_IN);
+        paint.setColorFilter(filter);
+        Canvas canvas = new Canvas(resized);
+        canvas.drawBitmap(resized, 0, 0, paint);
+        mMarkerOption = new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromBitmap(resized))
+                .position(posizione)
+                .draggable(false)
+                .rotation(-45 + v)
+                .flat(true)
+                .anchor(0.5f, 0.5f);
+        mGoogleMap.addMarker(mMarkerOption);
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -152,40 +180,21 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     }
 
     private void startSavePercorso(Percorso percorso) {
+        velocità.update(0);
+        altitudine.update(0);
+        punti.update(0);
+        distanza.update(0);
         Intent intent = new Intent(getActivity(), SavePercorsoActivity.class);
         intent.putExtra(Keys.PERCORSO, percorso);
-        intent.putExtra(Keys.UTENTE, reference.get().utente);
         startActivityForResult(intent, SALVATAGGIO_UTENTE);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case SALVATAGGIO_UTENTE:
-                if (resultCode == RESULT_OK) {
-                    aggiornaUtente(data);
-                } else if (resultCode != RESULT_CANCELED) {
-                    dialog = showAlert("Errore salvataggio", "C'è stato un errore durante il salvataggio del percorso", true).create();
-                    dialog.show();
-                }
-        }
-    }
-
-    public void aggiornaUtente(Intent data) {
-        reference.get().utente = data.getParcelableExtra(Keys.UTENTE);
-        BackgroundHTTPRequest request = new BackgroundHTTPRequest(this);
-        request.execute(Keys.URL_SERVER + AGGIORNA_PUNTEGGIO +
-                "?id_utente=" + reference.get().utente.idUtente +
-                "&punteggio=" + reference.get().utente.punteggioUtente +
-                "&percorsi=" + reference.get().utente.percorsiUtente, Keys.JSON_RESULT);
-    }
-
-    private void muoviCamera(LatLng posizione) {
+    private float muoviCamera(LatLng posizione) {
+        float angleF = 0;
         CameraPosition cameraPosition;
         if (oldPos != null) {
             Double angle = Math.atan2((posizione.longitude - oldPos.longitude), posizione.latitude - oldPos.latitude);
-            float angleF = (float) Math.toDegrees(angle);
+            angleF = (float) Math.toDegrees(angle);
             cameraPosition = CameraPosition.builder().target(posizione).bearing(angleF).tilt(TILT).zoom(ZOOM).build();
         } else {
             cameraPosition = CameraPosition.builder().target(posizione).tilt(TILT).zoom(ZOOM).build();
@@ -193,6 +202,7 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
         }
         CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
         mGoogleMap.animateCamera(cameraUpdate);
+        return angleF;
     }
 
     private void setOptions() {
@@ -202,9 +212,9 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
 
     private void addPosizione(Posizione posizione) {
         LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
+        setMarker(latLng, muoviCamera(latLng));
         options.add(latLng);
         mGoogleMap.addPolyline(options);
-        muoviCamera(latLng);
     }
 
     private void setButton() {
@@ -264,7 +274,6 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
 
     private void stopTracking() {
         getActivity().stopService(intentGps);
-        getActivity().startService(intentNetwork);
     }
 
     private void startTracking() {
@@ -275,29 +284,22 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        //noinspection MissingPermission
-        mGoogleMap.setMyLocationEnabled(true);
-    }
-
-    private AlertDialog.Builder showAlert(String title, String message, boolean isCanellable) {
-        if (dialog != null && dialog.isShowing()) {
-            dialog.dismiss();
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setCancelable(isCanellable);
-        return builder;
     }
 
     @Override
     public void processResult(JSONArray result) {
         if (result != null && result.length() == 1) {
-            dialog = showAlert("Salvataggio effettauto", "Il suo percorso è stato salvato", true).create();
+            dialog = showAlert(getActivity(), dialog, "Salvataggio effettauto", "Il suo percorso è stato salvato", true).create();
             dialog.show();
         } else {
-            dialog = showAlert("Errore salvataggio", "C'è stato un errore durante il salvataggio del percorso", true).create();
+            dialog = showAlert(getActivity(), dialog, "Errore salvataggio", "C'è stato un errore durante il salvataggio del percorso", true).create();
             dialog.show();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        getActivity().stopService(intentNetwork);
     }
 }

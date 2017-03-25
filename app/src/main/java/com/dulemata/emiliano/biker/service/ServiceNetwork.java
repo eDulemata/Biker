@@ -21,26 +21,46 @@ import com.google.android.gms.location.LocationServices;
  * Created by Emiliano on 13/03/2017.
  */
 
-public class ServiceNetwork extends Service implements LocationListener {
+public class ServiceNetwork extends Service {
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
-    private Thread thread;
+    private Location prev;
+    private LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            if (prev == null) {
+                prev = location;
+                sendPosizione(location);
+            } else if (calcolaDistanza(prev, location) > 20) {
+                sendPosizione(location);
+                prev = location;
+            }
+        }
+    };
+
+    public void sendPosizione(Location location) {
+        Posizione posizione = new Posizione(location);
+        Intent intent = new Intent(Keys.POSIZIONE_NETWORK);
+        intent.putExtra(Keys.POSIZIONE, posizione);
+        sendBroadcast(intent);
+    }
+
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             if (mLocationRequest == null) {
                 mLocationRequest = new LocationRequest()
                         .setInterval(3000)
-                        //.setSmallestDisplacement(10)
-                        .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                        .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+                        .setMaxWaitTime(5000);
             }
             //noinspection MissingPermission
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, ServiceNetwork.this);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, locationListener);
         }
 
         @Override
         public void onConnectionSuspended(int i) {
-
+            mGoogleApiClient.connect();
         }
     };
     private GoogleApiClient.OnConnectionFailedListener connectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
@@ -81,24 +101,27 @@ public class ServiceNetwork extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mGoogleApiClient.isConnected())
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, locationListener);
             mGoogleApiClient.disconnect();
+        }
     }
 
-    @Override
-    public void onLocationChanged(final Location location) {
-        if (thread == null) {
-            thread = new Thread() {
-                @Override
-                public void run() {
-                    Posizione posizione = new Posizione(location);
-                    Intent intent = new Intent(Keys.POSIZIONE_NETWORK);
-                    intent.putExtra(Keys.POSIZIONE, posizione);
-                    sendBroadcast(intent);
-                }
-            };
-        }
-        thread.run();
+    private double calcolaDistanza(Location prev, Location succ) {
+        double distanza = 0;
+        double lat1 = toRadiante(succ.getLatitude());
+        double lat2 = toRadiante(prev.getLatitude());
+        double lng1 = toRadiante(succ.getLongitude());
+        double lng2 = toRadiante(prev.getLongitude());
+        double fi = Math.abs(lng1 - lng2);
+        double p = Math.acos(Math.sin(lat2) * Math.sin(lat1) + Math.cos(lat2) * Math.cos(lat1) * Math.cos(fi));
+        int RAGGIO_TERRA = 6371 * 1000;
+        distanza = p * RAGGIO_TERRA;
+        return distanza;
+    }
+
+    private double toRadiante(double grado) {
+        return (grado * Math.PI) / 180;
     }
 
 }

@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
-import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequest;
+import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.util.Keys;
 
 import org.json.JSONArray;
@@ -56,7 +56,7 @@ public class SubscribeActivity extends AppCompatActivity implements AsyncRespons
     private void subscribe() {
         dialog = showAlert("", getString(R.string.subscribing), false).create();
         dialog.show();
-        BackgroundHTTPRequest request = new BackgroundHTTPRequest(this);
+        BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(this);
         request.execute(Keys.URL_SERVER + SUBSCRIBE + "?email=" + emailInput.getText().toString() + "&pwd=" + passwordInput.getText().toString(), Keys.JSON_RESULT);
     }
 

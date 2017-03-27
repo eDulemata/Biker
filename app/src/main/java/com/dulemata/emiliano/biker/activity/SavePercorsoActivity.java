@@ -1,15 +1,14 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestPost;
@@ -19,6 +18,7 @@ import com.dulemata.emiliano.biker.data.Posizione;
 import com.dulemata.emiliano.biker.data.Utente;
 import com.dulemata.emiliano.biker.fragment.TrackerFragment;
 import com.dulemata.emiliano.biker.util.Keys;
+import com.dulemata.emiliano.biker.views.TrackerProperty;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -30,12 +30,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
-
-public class SavePercorsoActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class SavePercorsoActivity extends ActivityDialogInteraction implements OnMapReadyCallback {
 
     private static final String SALVA_PERCORSO = "salva_percorso.php";
     private static final String AGGIORNA_UTENTE = "aggiorna_utente.php";
+    private static final String PRIMA_VOLTA = "prima_volta";
     private SupportMapFragment mappaPercorso;
     Utente utente;
     TextView data, oraInizio, oraFine;
@@ -43,26 +42,37 @@ public class SavePercorsoActivity extends AppCompatActivity implements OnMapRead
     Button save, discard;
     Percorso aPercorso;
     private SharedPreferences preferences;
-    private AlertDialog dialog;
     private AsyncResponse aggiornaUtenteResponse = new AsyncResponse() {
         @Override
         public void processResult(JSONArray result) {
             try {
                 if (result != null && result.getJSONObject(0).getString(Keys.JSON_RESULT).equals(Keys.JSON_OK)) {
+                    alertDialog = setAlert("SALVATAGGIO COMPLETATO", "Il percorso è stato salvato e il profilo aggiornato", false)
+                            .setPositiveButton("Torna al tracking", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                            .create();
+                    alertDialog.show();
                     onBackPressed();
                 } else {
-                    dialog = showAlert(SavePercorsoActivity.this,
-                            dialog,
-                            "Errore",
-                            "C'è stato un errore durante l'aggiornamento del profilo",
-                            false)
+                    alertDialog = setAlert("ERRORE SALVATAGGIO", "C'è stato un errore durante l'aggiornamento del profilo. Annullando l'operazione il percorso non verrà salvato.", false)
                             .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     aggiornaUtente();
                                 }
-                            }).setNegativeButton("Annulla", null).create();
-                    dialog.show();
+                            })
+                            .setNegativeButton("Annulla", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //TODO annullare salvataggio percorso
+                                }
+                            })
+                            .create();
+                    alertDialog.show();
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -75,35 +85,31 @@ public class SavePercorsoActivity extends AppCompatActivity implements OnMapRead
             if (result != null && result.length() == 1) {
                 aggiornaUtente();
             } else {
-                dialog = showAlert(SavePercorsoActivity.this,
-                        dialog,
-                        "Errore",
-                        "C'è stato un errore durante il salvataggio del percorso",
-                        false)
+                alertDialog = setAlert("ERRORE SALVATAGGIO", "C'è stato un errore durante il salvataggio del percorso. Annullando l'operazione il percorso non verrà salvato.", false)
                         .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 savePercorso();
                             }
-                        }).setNegativeButton("Annulla", null).create();
-                dialog.show();
+                        })
+                        .setNegativeButton("Annulla", null)
+                        .create();
+                alertDialog.show();
             }
         }
     };
+    private boolean primaVolta = true;
 
     public void aggiornaUtente() {
-        dialog = showAlert(SavePercorsoActivity.this, dialog, "", "Aggiornamento profilo", false).create();
-        dialog.show();
-        if (preferences == null)
-            preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
-        if (utente == null)
-            utente = new Utente(preferences);
-        SharedPreferences.Editor editor = preferences.edit();
-        utente.punteggioUtente = utente.punteggioUtente + aPercorso.puntiGuadagnati;
-        utente.percorsiUtente = utente.percorsiUtente + 1;
-        editor.putInt(Keys.PUNTEGGIO, utente.punteggioUtente);
-        editor.putInt(Keys.NUMERO_PERCORSI, utente.percorsiUtente);
-        editor.apply();
+        if (primaVolta) {
+            SharedPreferences.Editor editor = preferences.edit();
+            utente.punteggioUtente = utente.punteggioUtente + aPercorso.puntiGuadagnati;
+            utente.percorsiUtente = utente.percorsiUtente + 1;
+            editor.putInt(Keys.PUNTEGGIO, utente.punteggioUtente);
+            editor.putInt(Keys.NUMERO_PERCORSI, utente.percorsiUtente);
+            editor.apply();
+            primaVolta = false;
+        }
         BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(aggiornaUtenteResponse);
         request.execute(Keys.URL_SERVER + AGGIORNA_UTENTE +
                 "?id_utente=" + utente.idUtente +
@@ -140,7 +146,12 @@ public class SavePercorsoActivity extends AppCompatActivity implements OnMapRead
         trackerProperty4 = new TrackerProperty(findViewById(R.id.track_4), TrackerProperty.Proprietà.distanzaTotale, aPercorso.distanzaTotale);
         save = (Button) findViewById(R.id.save);
         discard = (Button) findViewById(R.id.cancel);
-        utente = getIntent().getParcelableExtra(Keys.UTENTE);
+        if (savedInstanceState == null) {
+            utente = getIntent().getParcelableExtra(Keys.UTENTE);
+        } else {
+            utente = savedInstanceState.getParcelable(Keys.UTENTE);
+            primaVolta = savedInstanceState.getBoolean(PRIMA_VOLTA);
+        }
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -150,15 +161,13 @@ public class SavePercorsoActivity extends AppCompatActivity implements OnMapRead
         discard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setResult(RESULT_CANCELED);
                 finish();
             }
         });
     }
 
     private void savePercorso() {
-        dialog = showAlert(this, dialog, "", "Salvataggio percorso in corso...", false).create();
-        dialog.show();
+        showProgressDialog("SALVATAGGIO IN CORSO", "attendere...", false);
         BackgroundHTTPRequestPost request = new BackgroundHTTPRequestPost(savePercorsoResponse);
         utente = new Utente(preferences);
         int idUtente = utente.idUtente;
@@ -174,10 +183,10 @@ public class SavePercorsoActivity extends AppCompatActivity implements OnMapRead
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (dialog != null)
-            dialog.dismiss();
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(Keys.UTENTE, utente);
+        outState.putBoolean(PRIMA_VOLTA, primaVolta);
+        super.onSaveInstanceState(outState);
     }
 
     @Override

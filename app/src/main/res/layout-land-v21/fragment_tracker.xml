@@ -6,8 +6,6 @@
     android:background="@color/almost_white"
     tools:context="com.dulemata.emiliano.biker.fragment.TrackerFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-
     <android.support.constraint.Guideline
         android:id="@+id/guideline"
         android:layout_width="wrap_content"

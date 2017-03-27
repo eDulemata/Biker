@@ -21,7 +21,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".SplashActivity"
+            android:name=".activity.SplashActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:theme="@style/FullscreenTheme">
@@ -39,12 +39,12 @@
             android:name=".service.ServiceNetwork"
             android:exported="false" />
 
-        <activity android:name=".LoginActivity" />
+        <activity android:name=".activity.LoginActivity" />
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".activity.SettingsActivity" />
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -53,19 +53,19 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="@string/google_maps_api" />
 
-        <activity android:name=".SubscribeActivity" />
+        <activity android:name=".activity.SubscribeActivity" />
         <activity
-            android:name=".SavePercorsoActivity"
-            android:parentActivityName=".MainActivity" />
-        <activity android:name=".PercorsoActivity" />
+            android:name=".activity.SavePercorsoActivity"
+            android:parentActivityName=".activity.MainActivity" />
+        <activity android:name=".activity.PercorsoActivity" />
         <activity
             android:name=".PremioListActivity"
             android:label="@string/title_premio_list"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.dulemata.emiliano.biker.MainActivity" />
+                android:value="com.dulemata.emiliano.biker.activity.MainActivity" />
         </activity>
         <activity
             android:name=".PremioDetailActivity"
@@ -77,13 +77,13 @@
                 android:value="com.dulemata.emiliano.biker.PremioListActivity" />
         </activity>
         <activity
-            android:name=".PremiActivity"
+            android:name=".activity.PremiActivity"
             android:label="@string/title_activity_premi"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.dulemata.emiliano.biker.MainActivity" />
+                android:value="com.dulemata.emiliano.biker.activity.MainActivity" />
         </activity>
     </application>
 

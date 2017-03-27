@@ -1,14 +1,13 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.util.Keys;
@@ -16,12 +15,10 @@ import com.dulemata.emiliano.biker.util.Keys;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class SubscribeActivity extends AppCompatActivity implements AsyncResponse {
+public class SubscribeActivity extends ActivityDialogInteraction implements AsyncResponse {
 
-    private final String SUBSCRIBE = "subscribe.php";
     EditText emailInput, passwordInput;
     Button subscribeButton;
-    private AlertDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +40,13 @@ public class SubscribeActivity extends AppCompatActivity implements AsyncRespons
                     emailInput.setHint(R.string.email_not_inserted);
                     passwordInput.setHint(R.string.password_not_inserted);
                 }
-
             }
 
         });
+        if (savedInstanceState != null) {
+            emailInput.setText(savedInstanceState.getString(Keys.EMAIL));
+            passwordInput.setText(savedInstanceState.getString(Keys.PASSWORD));
+        }
     }
 
     private boolean checkInputs() {
@@ -54,10 +54,18 @@ public class SubscribeActivity extends AppCompatActivity implements AsyncRespons
     }
 
     private void subscribe() {
-        dialog = showAlert("", getString(R.string.subscribing), false).create();
-        dialog.show();
+        showProgressDialog("ISCRIZIONE IN CORSO", "attendere...", false);
         BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(this);
+        String SUBSCRIBE = "subscribe.php";
         request.execute(Keys.URL_SERVER + SUBSCRIBE + "?email=" + emailInput.getText().toString() + "&pwd=" + passwordInput.getText().toString(), Keys.JSON_RESULT);
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(Keys.EMAIL, emailInput.getText().toString());
+        outState.putString(Keys.PASSWORD, passwordInput.getText().toString());
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -70,22 +78,14 @@ public class SubscribeActivity extends AppCompatActivity implements AsyncRespons
                 setResult(RESULT_OK, data);
                 finish();
             } else {
-                dialog = showAlert(getString(R.string.generic_error), getString(R.string.user_already_subscribed), false).setPositiveButton(android.R.string.ok, null).create();
-                dialog.show();
+                alertDialog = setAlert("ISCRIZIONE ANNULLATA", "Utente già iscritto", true)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .create();
+                alertDialog.show();
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    private AlertDialog.Builder showAlert(String title, String message, boolean isCanellable) {
-        if (dialog != null && dialog.isShowing()) {
-            dialog.dismiss();
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setCancelable(isCanellable);
-        return builder;
-    }
 }

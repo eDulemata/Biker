@@ -64,9 +64,9 @@
     <string name="time_end">Finito alle:</string>
     <string name="negozi">Ottieni premi</string>
     <string name="compra_premio">COMPRA</string>
-    <string name="see_rewards">See Rewards</string>
-    <string name="price">Price</string>
-    <string name="quantità">Remaining</string>
+    <string name="see_rewards">Vedi Premi</string>
+    <string name="price">Prezzo</string>
+    <string name="quantità">Rimanenti</string>
     <string name="data_acquisto">Data Acquisto:</string>
     <string name="costo_premio">Costo Premio:</string>
     <string name="negozio">Negozio:</string>

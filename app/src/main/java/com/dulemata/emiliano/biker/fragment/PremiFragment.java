@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.dulemata.emiliano.biker.PremiViewAdapter;
+import com.dulemata.emiliano.biker.views.viewAdapter.PremiViewAdapter;
 import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.data.Premio;
 import com.dulemata.emiliano.biker.util.Keys;
@@ -38,8 +38,6 @@ public class PremiFragment extends Fragment {
     public PremiFragment() {
     }
 
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
     public static PremiFragment newInstance(List<Premio> premi) {
         PremiFragment fragment = new PremiFragment();
         Bundle args = new Bundle();

@@ -1,8 +1,10 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
+
+import com.dulemata.emiliano.biker.R;
 
 public class SettingsActivity extends AppCompatActivity {
 

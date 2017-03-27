@@ -1,4 +1,4 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.views.viewAdapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.fragment.PremiFragment.OnListFragmentInteractionListener;
 import com.dulemata.emiliano.biker.data.Premio;
 
@@ -15,7 +16,6 @@ import java.util.List;
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Premio} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
- * TODO: Replace the implementation with code for your data type.
  */
 public class PremiViewAdapter extends RecyclerView.Adapter<PremiViewAdapter.ViewHolder> {
 

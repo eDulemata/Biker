@@ -3,6 +3,7 @@ package com.dulemata.emiliano.biker.fragment;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -12,25 +13,23 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.dulemata.emiliano.biker.MainActivity;
 import com.dulemata.emiliano.biker.R;
-import com.dulemata.emiliano.biker.SavePercorsoActivity;
-import com.dulemata.emiliano.biker.TrackerProperty;
-import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
+import com.dulemata.emiliano.biker.activity.MainActivity;
+import com.dulemata.emiliano.biker.activity.SavePercorsoActivity;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;
 import com.dulemata.emiliano.biker.service.ServiceGPS;
 import com.dulemata.emiliano.biker.service.ServiceNetwork;
 import com.dulemata.emiliano.biker.util.Keys;
+import com.dulemata.emiliano.biker.views.TrackerProperty;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -42,21 +41,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import org.json.JSONArray;
-
 import java.lang.ref.WeakReference;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
+public class TrackerFragment extends FragmentBiker implements OnMapReadyCallback {
 
-public class TrackerFragment extends Fragment implements FragmentInt, OnMapReadyCallback, AsyncResponse {
-
-    private static final int SALVATAGGIO_UTENTE = 23;
     public static final int ZOOM = 18;
     public static final int TILT = 55;
     private GoogleMap mGoogleMap;
-    public static boolean isTracking;
     private WeakReference<MainActivity> reference;
-    private AlertDialog dialog;
+    public static boolean isTracking;
     private TrackerProperty velocità, altitudine, distanza, punti;
     private PolylineOptions options;
     private Button tracking_button;
@@ -64,9 +57,63 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     private Intent intentGps, intentNetwork, getPercorso;
     private LatLng oldPos;
     private MarkerOptions mMarkerOption;
+    private View.OnClickListener button_listener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (isTracking) {
+                isTracking = false;
+                stopTracking();
+                setButton();
+                mGoogleMap.clear();
+                options = null;
+            } else {
+                LocationManager locationManager = (LocationManager) TrackerFragment.this.reference.get().getSystemService(Context.LOCATION_SERVICE);
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    askForGPS();
+                } else {
+                    setupTracking();
+                }
+            }
+        }
+
+    };
+
+    public void setupTracking() {
+        isTracking = true;
+        startTracking();
+        setButton();
+    }
+
+    private void askForGPS() {
+        alertDialog = setAlert("PRECISIONE MAGGIORE", "Attivando il GPS la qualità del tracking sarà maggiore", false)
+                .setPositiveButton("attiva", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent gpsOptionsIntent = new Intent(
+                                android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(gpsOptionsIntent);
+                        setupTracking();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("continua", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create();
+        alertDialog.show();
+    }
 
     public TrackerFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        reference = new WeakReference<>((MainActivity) context);
     }
 
     @Override
@@ -160,12 +207,6 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
         mGoogleMap.addMarker(mMarkerOption);
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        reference = new WeakReference<>((MainActivity) context);
-    }
-
     private void rimuoviNotifica() {
         Intent intent = new Intent(Keys.REMOVE_NOTIFICA);
         getActivity().sendBroadcast(intent);
@@ -186,7 +227,7 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
         distanza.update(0);
         Intent intent = new Intent(getActivity(), SavePercorsoActivity.class);
         intent.putExtra(Keys.PERCORSO, percorso);
-        startActivityForResult(intent, SALVATAGGIO_UTENTE);
+        startActivity(intent);
     }
 
     private float muoviCamera(LatLng posizione) {
@@ -251,23 +292,7 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
         altitudine = new TrackerProperty(v.findViewById(R.id.altitudine), TrackerProperty.Proprietà.altitudine, 0);
         punti = new TrackerProperty(v.findViewById(R.id.punti), TrackerProperty.Proprietà.punti, 0);
         tracking_button = (Button) v.findViewById(R.id.button_tracking);
-        tracking_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isTracking) {
-                    isTracking = false;
-                    stopTracking();
-                    setButton();
-                    mGoogleMap.clear();
-                    options = null;
-                } else {
-                    isTracking = true;
-                    startTracking();
-                    setButton();
-                }
-            }
-
-        });
+        tracking_button.setOnClickListener(button_listener);
         setButton();
         return v;
     }
@@ -287,19 +312,9 @@ public class TrackerFragment extends Fragment implements FragmentInt, OnMapReady
     }
 
     @Override
-    public void processResult(JSONArray result) {
-        if (result != null && result.length() == 1) {
-            dialog = showAlert(getActivity(), dialog, "Salvataggio effettauto", "Il suo percorso è stato salvato", true).create();
-            dialog.show();
-        } else {
-            dialog = showAlert(getActivity(), dialog, "Errore salvataggio", "C'è stato un errore durante il salvataggio del percorso", true).create();
-            dialog.show();
-        }
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
         getActivity().stopService(intentNetwork);
     }
+
 }

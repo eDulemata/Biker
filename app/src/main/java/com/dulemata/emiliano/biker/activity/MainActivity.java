@@ -1,4 +1,4 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.Manifest;
 import android.content.DialogInterface;
@@ -15,22 +15,21 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.data.Negozio;
-import com.dulemata.emiliano.biker.fragment.AcquistiFragment;
-import com.dulemata.emiliano.biker.fragment.NegozioFragment;
 import com.dulemata.emiliano.biker.data.Percorso;
-import com.dulemata.emiliano.biker.fragment.FragmentInt;
+import com.dulemata.emiliano.biker.fragment.AcquistiFragment;
+import com.dulemata.emiliano.biker.fragment.FragmentBiker;
 import com.dulemata.emiliano.biker.fragment.HistoryFragment;
+import com.dulemata.emiliano.biker.fragment.NegozioFragment;
 import com.dulemata.emiliano.biker.fragment.ProfileFragment;
 import com.dulemata.emiliano.biker.fragment.TrackerFragment;
 import com.dulemata.emiliano.biker.util.Keys;
@@ -42,46 +41,39 @@ import org.json.JSONException;
 
 import java.lang.ref.WeakReference;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
 import static com.dulemata.emiliano.biker.util.Keys.A_FRAGMENT;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends ActivityDialogInteraction
         implements NavigationView.OnNavigationItemSelectedListener,
-        HistoryFragment.OnListPercorsoInteractionListener, NegozioFragment.OnListFragmentInteractionListener {
+        HistoryFragment.OnListPercorsoInteractionListener,
+        NegozioFragment.OnListFragmentInteractionListener {
 
-    public static boolean isRunning;
     private static final int LOCATION_PERMISSIONS = 4;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 8;
     NavigationView navigationView;
     Toolbar toolbar;
     private int idContainer;
-    private AlertDialog dialog;
-    private WeakReference<FragmentInt> reference;
+    private WeakReference<FragmentBiker> reference;
     private SharedPreferences preferences;
-    private SharedPreferences.Editor editor;
     private AsyncResponse logoutResponse = new AsyncResponse() {
         @Override
         public void processResult(JSONArray result) {
             try {
                 if (result != null && result.getJSONObject(0).getString(Keys.JSON_RESULT).equals(Keys.JSON_OK)) {
+                    preferences.edit().putBoolean(Keys.AUTO_LOGIN, false).apply();
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
                 } else {
-                    dialog = showAlert(MainActivity.this, dialog, "Errore", "Errore logout.", true).setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            logout();
-                        }
-                    }).create();
-                    dialog.show();
+                    alertDialog = setAlert("ERRORE LOGOUT", "Impossibile connettersi. Riprovare", true)
+                            .setPositiveButton(android.R.string.ok, null).create();
+                    alertDialog.show();
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
     };
-    private Negozio negozio;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +82,7 @@ public class MainActivity extends AppCompatActivity
         preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
         checkPlayServices();
         if (savedInstanceState != null) {
-            reference = new WeakReference<>((FragmentInt) getSupportFragmentManager().getFragment(savedInstanceState, A_FRAGMENT));
+            reference = new WeakReference<>((FragmentBiker) getSupportFragmentManager().getFragment(savedInstanceState, A_FRAGMENT));
         } else {
             setFragment(R.id.tracker);
         }
@@ -106,7 +98,6 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         setHeaderValues();
         navigationView.setNavigationItemSelectedListener(this);
-        isRunning = true;
         runtimePermissions();
     }
 
@@ -134,25 +125,25 @@ public class MainActivity extends AppCompatActivity
     private void setFragment(int idContainer) {
         switch (idContainer) {
             case R.id.tracker:
-                reference = new WeakReference<FragmentInt>(new TrackerFragment());
+                reference = new WeakReference<FragmentBiker>(new TrackerFragment());
                 break;
             case R.id.history:
-                reference = new WeakReference<FragmentInt>(new HistoryFragment());
+                reference = new WeakReference<FragmentBiker>(new HistoryFragment());
                 break;
             case R.id.profile:
-                reference = new WeakReference<FragmentInt>(new ProfileFragment());
+                reference = new WeakReference<FragmentBiker>(new ProfileFragment());
                 break;
             case R.id.negozi:
-                reference = new WeakReference<FragmentInt>(new NegozioFragment());
+                reference = new WeakReference<FragmentBiker>(new NegozioFragment());
                 break;
             case R.id.acquisti:
-                reference = new WeakReference<FragmentInt>(new AcquistiFragment());
+                reference = new WeakReference<FragmentBiker>(new AcquistiFragment());
                 break;
         }
         if (reference.get() != null) {
             this.idContainer = idContainer;
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.fragment_container, (Fragment) reference.get());
+            fragmentTransaction.replace(R.id.fragment_container, reference.get());
             fragmentTransaction.commit();
         }
 
@@ -160,9 +151,9 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
         outState.putInt(Keys.MENU_ITEM, idContainer);
         getSupportFragmentManager().putFragment(outState, A_FRAGMENT, (Fragment) reference.get());
+        super.onSaveInstanceState(outState);
     }
 
     private boolean checkPlayServices() {
@@ -173,17 +164,14 @@ public class MainActivity extends AppCompatActivity
                 apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
                         .show();
             } else {
-                dialog = showAlert(this, dialog,
-                        "Impossibile continuare",
-                        "Per usare Biker sono necessari i google play services",
-                        false)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                alertDialog = setAlert("ERRORE PLAY SERIVCES", "Impossibile usare Biker senza i play services", true)
+                        .setPositiveButton(R.string.close, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                MainActivity.this.finish();
+                                finish();
                             }
                         }).create();
-                dialog.show();
+                alertDialog.show();
             }
             return false;
         }
@@ -196,21 +184,19 @@ public class MainActivity extends AppCompatActivity
             case LOCATION_PERMISSIONS:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 } else {
-                    dialog = showAlert(this, dialog, "Permessi necessari", "I permessi per accedere alla posizione sono necessari per l'utilizzo del servizio di tracking", false)
-                            .setPositiveButton("Attiva", new DialogInterface.OnClickListener() {
+                    alertDialog = setAlert("ERRORE PERMESSI", "Biker necessita della tua posizione per funzionare", true)
+                            .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            }).setPositiveButton(R.string.please_retry, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     runtimePermissions();
                                 }
-                            })
-                            .setNegativeButton("Esci", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    MainActivity.this.finish();
-                                }
-                            })
-                            .create();
-                    dialog.show();
+                            }).create();
+                    alertDialog.show();
                 }
         }
     }
@@ -221,20 +207,15 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            dialog = showAlert(this, dialog, "Chiusura", "Chiudere Biker?", false).setPositiveButton(R.string.close, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    if (TrackerFragment.isTracking) {
-                        Intent intent = new Intent(Keys.SHOW_NOTIFICA);
-                        MainActivity.this.sendBroadcast(intent);
-                    }
-                    if (MainActivity.this.dialog != null)
-                        MainActivity.this.dialog.dismiss();
-                    MainActivity.super.onBackPressed();
-                }
-            })
-                    .setNegativeButton(android.R.string.no, null).create();
-            dialog.show();
+            alertDialog = setAlert("CHIUSURA APP", "chiudere l'app?", true)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.close, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    }).create();
+            alertDialog.show();
         }
     }
 
@@ -252,19 +233,21 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         } else if (id == R.id.logout) {
-            dialog = showAlert(this, dialog, getString(R.string.logout), getString(R.string.logout_message), false).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE).edit().putBoolean(Keys.AUTO_LOGIN, false).apply();
-                    logout();
-                }
-            }).setNegativeButton(R.string.cancel, null).create();
-            dialog.show();
+            alertDialog = setAlert("LOGOUT", "effettuare il logout?", true)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton("CONFERMA", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            logout();
+                        }
+                    }).create();
+            alertDialog.show();
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void logout() {
+        showProgressDialog("", "logout in corso...", false);
         BackgroundHTTPRequestGet request = new BackgroundHTTPRequestGet(logoutResponse);
         request.execute(Keys.URL_SERVER + "logout.php" + "?id_utente=" + preferences.getInt(Keys.ID, -1), Keys.JSON_RESULT);
     }
@@ -280,7 +263,6 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
 
     @Override
     public void onListPercorsoInteraction(Percorso percorso) {

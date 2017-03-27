@@ -1,10 +1,11 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.util.Keys;
 
 /**

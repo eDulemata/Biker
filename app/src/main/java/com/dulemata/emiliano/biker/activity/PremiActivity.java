@@ -1,14 +1,13 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.data.Negozio;
@@ -21,12 +20,9 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
-
-public class PremiActivity extends AppCompatActivity implements AsyncResponse, PremiFragment.OnListFragmentInteractionListener {
+public class PremiActivity extends ActivityDialogInteraction implements AsyncResponse, PremiFragment.OnListFragmentInteractionListener {
 
     private ArrayList<Premio> premi = new ArrayList<>();
-    private AlertDialog dialog;
     private Negozio negozio;
     private AsyncResponse acquistaPremioResponse = new AsyncResponse() {
         @Override
@@ -38,29 +34,40 @@ public class PremiActivity extends AppCompatActivity implements AsyncResponse, P
                         int nuovoPunteggio = preferences.getInt(Keys.PUNTEGGIO, -1) - premio.valorePremio;
                         editor.putInt(Keys.PUNTEGGIO, nuovoPunteggio);
                         editor.apply();
-                        dialog = showAlert(PremiActivity.this, dialog, "", "Acquisto effettuato", false)
+                        alertDialog = setAlert("OPERAZIONE COMPLETA", "Premio acqistato", false)
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         finish();
                                     }
-                                })
-                                .create();
-                        dialog.show();
+                                }).create();
+                        alertDialog.show();
                     } else {
-                        dialog = showAlert(PremiActivity.this, dialog, "ERRORE", "Acquisto non effettuato. Riprovare", true)
-                                .setPositiveButton(android.R.string.ok, null)
+                        alertDialog = setAlert("ERRORE OPERAZIONE", "C'è stato un errore durante l'acquisto", false)
+                                .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        onListFragmentInteraction(premio);
+                                    }
+                                })
+                                .setNegativeButton("Annulla", null)
                                 .create();
-                        dialog.show();
+                        alertDialog.show();
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             } else {
-                dialog = showAlert(PremiActivity.this, dialog, "ERRORE", "Acquisto non effettuato. Riprovare", true)
-                        .setPositiveButton(android.R.string.ok, null)
+                alertDialog = setAlert("ERRORE CONNESSIONE", "C'è stato un errore durante l'acquisto", false)
+                        .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                onListFragmentInteraction(premio);
+                            }
+                        })
+                        .setNegativeButton("Annulla", null)
                         .create();
-                dialog.show();
+                alertDialog.show();
             }
         }
     };
@@ -105,6 +112,7 @@ public class PremiActivity extends AppCompatActivity implements AsyncResponse, P
         setFragment();
     }
 
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList(Keys.PREMI, premi);
@@ -118,30 +126,25 @@ public class PremiActivity extends AppCompatActivity implements AsyncResponse, P
         this.premio = premio;
         preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
         int punti = preferences.getInt(Keys.PUNTEGGIO, -1);
-        if (punti > 0) {
-            if (premio.valorePremio <= punti) {
-                dialog = showAlert(this, dialog, "ATTENDERE", "Acquisto in corso", false).create();
-                dialog.show();
-                BackgroundHTTPRequestGet requestGet = new BackgroundHTTPRequestGet(acquistaPremioResponse);
-                String url = Keys.URL_SERVER +
-                        "ottieni_premio.php?id_premio=" + premio.idPremio +
-                        "&nome_premio=" + premio.nomePremio +
-                        "&id_utente=" + preferences.getInt(Keys.ID, -1) +
-                        "&id_negozio=" + negozio.idNegozio +
-                        "&nome_negozio=" + negozio.nomeNegozio +
-                        "&prezzo=" + premio.valorePremio +
-                        "&data=" + SystemClock.elapsedRealtimeNanos();
-                url = url.replaceAll(" ","%20");;
-                requestGet.execute(url, Keys.JSON_PREMI);
-            } else {
-                dialog = showAlert(this, dialog, "IMPOSSIBILE RISCATTARE PREMIO", "Punti posseduti non sufficenti", true)
-                        .setPositiveButton(android.R.string.ok, null).create();
-                dialog.show();
-            }
+        if (premio.valorePremio <= punti) {
+            showProgressDialog("ACQUISTO IN CORSO", "attentdere...", false);
+            BackgroundHTTPRequestGet requestGet = new BackgroundHTTPRequestGet(acquistaPremioResponse);
+            String url = Keys.URL_SERVER +
+                    "ottieni_premio.php?id_premio=" + premio.idPremio +
+                    "&nome_premio=" + premio.nomePremio +
+                    "&id_utente=" + preferences.getInt(Keys.ID, -1) +
+                    "&id_negozio=" + negozio.idNegozio +
+                    "&nome_negozio=" + negozio.nomeNegozio +
+                    "&prezzo=" + premio.valorePremio +
+                    "&data=" + SystemClock.elapsedRealtimeNanos();
+            url = url.replaceAll(" ", "%20");
+            requestGet.execute(url, Keys.JSON_PREMI);
         } else {
-            dialog = showAlert(this, dialog, "ERRORE", "Impossibile ottenere il punteggio. Effettuare nuovamente il login", true)
-                    .setPositiveButton(android.R.string.ok, null).create();
-            dialog.show();
+            alertDialog = setAlert("IMPOSSIBILE CONTINUARE", "Punti non sufficienti per riscattare il premio", true)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .create();
+            alertDialog.show();
         }
+
     }
 }

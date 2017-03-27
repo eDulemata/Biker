@@ -1,4 +1,4 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.views.viewAdapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -7,9 +7,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.data.FuoriPercorsoException;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.fragment.HistoryFragment.OnListPercorsoInteractionListener;
+import com.dulemata.emiliano.biker.views.TrackerProperty;
 
 import java.util.List;
 

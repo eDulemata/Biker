@@ -1,15 +1,14 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
 import com.dulemata.emiliano.biker.data.Utente;
@@ -18,14 +17,11 @@ import com.dulemata.emiliano.biker.util.Keys;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
-
-public class LoginActivity extends AppCompatActivity implements AsyncResponse {
+public class LoginActivity extends ActivityDialogInteraction implements AsyncResponse {
 
     public static final String LOGIN = "login.php";
     private static final int SUBSCRIBE_INTENT = 1;
     private EditText emailInput, passwordInput;
-    private AlertDialog dialog;
     private CheckBox saveCredentials;
     private SharedPreferences.Editor editor;
     private SharedPreferences preferences;
@@ -43,6 +39,7 @@ public class LoginActivity extends AppCompatActivity implements AsyncResponse {
             @Override
             public void onClick(View v) {
                 if (!inputsAreEmpty()) {
+                    showProgressDialog("", getString(R.string.logging_in), false);
                     String email = emailInput.getText().toString();
                     String password = passwordInput.getText().toString();
                     sendRequest(email, password);
@@ -57,6 +54,10 @@ public class LoginActivity extends AppCompatActivity implements AsyncResponse {
                 startActivityForResult(intent, SUBSCRIBE_INTENT);
             }
         });
+        if (savedInstanceState != null) {
+            emailInput.setText(savedInstanceState.getString(Keys.EMAIL));
+            passwordInput.setText(savedInstanceState.getString(Keys.PASSWORD));
+        }
     }
 
     @Override
@@ -64,8 +65,7 @@ public class LoginActivity extends AppCompatActivity implements AsyncResponse {
         switch (requestCode) {
             case SUBSCRIBE_INTENT:
                 if (resultCode == RESULT_OK) {
-                    Utente utente = data.getParcelableExtra(Keys.UTENTE);
-                    moveToMain(utente);
+                    LoginActivity.this.sendRequest(data.getStringExtra(Keys.EMAIL), data.getStringExtra(Keys.PASSWORD));
                 }
         }
     }
@@ -95,6 +95,9 @@ public class LoginActivity extends AppCompatActivity implements AsyncResponse {
 
     @Override
     public void processResult(JSONArray result) {
+        if (progressDialog != null && progressDialog.isShowing())
+            progressDialog.dismiss();
+        restoreScreenRotation();
         try {
             if (result != null) {
                 Utente utente = new Utente(result.getJSONObject(0));
@@ -107,19 +110,22 @@ public class LoginActivity extends AppCompatActivity implements AsyncResponse {
                 editor.apply();
                 moveToMain(utente);
             } else {
-                dialog = showAlert(this, dialog, getString(R.string.login), getString(R.string.user_not_subscribed), true).setPositiveButton(android.R.string.ok, null).create();
-                dialog.show();
+                alertDialog = setAlert("ERRORE LOGIN", "credenziali inserite non valide", true)
+                        .setPositiveButton(android.R.string.ok, null).create();
+                alertDialog.show();
             }
         } catch (JSONException e) {
-            dialog = showAlert(this, dialog, getString(R.string.login), getString(R.string.user_not_subscribed), true).setPositiveButton(android.R.string.ok, null).create();
-            dialog.show();
+            alertDialog = setAlert("ERRORE RETE", "problema durante la connessione", true)
+                    .setPositiveButton(android.R.string.ok, null).create();
+            alertDialog.show();
         }
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (dialog != null)
-            dialog.dismiss();
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(Keys.EMAIL, emailInput.getText().toString());
+        outState.putString(Keys.PASSWORD, passwordInput.getText().toString());
+        super.onSaveInstanceState(outState);
     }
+
 }

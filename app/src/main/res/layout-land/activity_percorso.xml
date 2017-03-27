@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary"
-    tools:context="com.dulemata.emiliano.biker.SavePercorsoActivity">
+    tools:context="com.dulemata.emiliano.biker.activity.SavePercorsoActivity">
 
     <TextView
         android:id="@+id/data"

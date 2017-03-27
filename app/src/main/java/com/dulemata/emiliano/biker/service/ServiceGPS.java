@@ -16,9 +16,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
-import com.dulemata.emiliano.biker.MainActivity;
+import com.dulemata.emiliano.biker.activity.MainActivity;
 import com.dulemata.emiliano.biker.R;
-import com.dulemata.emiliano.biker.SavePercorsoActivity;
+import com.dulemata.emiliano.biker.activity.SavePercorsoActivity;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;
 import com.dulemata.emiliano.biker.util.Keys;
@@ -42,8 +42,8 @@ public class ServiceGPS extends Service implements LocationListener {
         public void onConnected(@Nullable Bundle bundle) {
             if (mLocationRequest == null) {
                 mLocationRequest = new LocationRequest()
-                        .setInterval(10000)
-                        .setMaxWaitTime(15000)
+                        .setInterval(5000)
+                        .setMaxWaitTime(8000)
                         .setSmallestDisplacement(20)
                         .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             }

@@ -1,7 +1,9 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.views;
 
 import android.view.View;
 import android.widget.TextView;
+
+import com.dulemata.emiliano.biker.R;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;

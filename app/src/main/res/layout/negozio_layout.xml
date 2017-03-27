@@ -25,5 +25,6 @@
         android:layout_below="@+id/nome_negozio"
         android:layout_margin="@dimen/activity_horizontal_margin"
         android:background="@color/primary_dark"
-        android:text="@string/see_rewards" />
+        android:text="@string/see_rewards"
+        android:textColor="@color/almost_white" />
 </RelativeLayout>

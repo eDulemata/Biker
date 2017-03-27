@@ -2,9 +2,6 @@ package com.dulemata.emiliano.biker.util;
 
 import android.graphics.Color;
 
-/**
- * Created by Emiliano on 11/03/2017.
- */
 
 public class Keys {
     public static final int VERDE = Color.rgb(76, 175, 80);
@@ -52,7 +49,6 @@ public class Keys {
     public static final String SHOW_NOTIFICA = "show_notifica";
     public static final String REMOVE_NOTIFICA = "remove_notifica";
     public static final String OLD_POS = "old_pos";
-    public static final String OPTIONS = "polyline_options";
     public static final float SPESSORE_LINEA_RIDOTTO = 10;
     public static final String NUMERO_PERCORSI = "numero_percorsi_SHP";
     public static final String END_TRACKING = "end_tracking";
@@ -72,4 +68,14 @@ public class Keys {
     public static final String JSON_ACQUISTI = "acquisti";
     public static final String ACQUISTI = "acquisti";
     public static final String VALORE_ACQUISTO = "prezzo_premio";
+    public static final String DIALOG_SHOWING = "dialog_showing";
+    public static final String DIALOG_TITLE = "dialog_title";
+    public static final String DIALOG_MESSAGE = "dialog_message";
+    public static final String DIALOG_CANCELABLE = "dialog_cancelable";
+    public static final String DIALOG_HAS_POSITIVE_BUTTON = "has_positive_button";
+    public static final String DIALOG_HAS_NEGATIVE_BUTTON = "has_negative_button";
+    public static final String DIALOG_POSITIVE_BUTTON = "positive_button";
+    public static final String DIALOG_NEGATIVE_BUTTON = "negative_button";
+    public static final String DIALOG_TAG = "dialog";
+    public static final String DIALOG_LISTENER = "listener";
 }

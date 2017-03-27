@@ -1,4 +1,4 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.views.viewAdapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -6,13 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.data.Acquisto;
 
 import java.util.List;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Acquisto}
- * TODO: Replace the implementation with code for your data type.
  */
 public class AcquistiViewAdapter extends RecyclerView.Adapter<AcquistiViewAdapter.ViewHolder> {
 

@@ -1,10 +1,12 @@
-package com.dulemata.emiliano.biker;
+package com.dulemata.emiliano.biker.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Display;
 import android.widget.TextView;
 
+import com.dulemata.emiliano.biker.R;
+import com.dulemata.emiliano.biker.views.TrackerProperty;
 import com.dulemata.emiliano.biker.data.FuoriPercorsoException;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;

@@ -1,18 +1,17 @@
 package com.dulemata.emiliano.biker.fragment;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.dulemata.emiliano.biker.AcquistiViewAdapter;
+import com.dulemata.emiliano.biker.views.viewAdapter.AcquistiViewAdapter;
 import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.connectivity.AsyncResponse;
 import com.dulemata.emiliano.biker.connectivity.BackgroundHTTPRequestGet;
@@ -26,17 +25,14 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dulemata.emiliano.biker.util.Dialog.showAlert;
-
 /**
  * A fragment representing a list of Items.
  * <p/>
  * interface.
  */
-public class AcquistiFragment extends Fragment implements AsyncResponse, FragmentInt {
+public class AcquistiFragment  extends FragmentBiker implements AsyncResponse {
 
     private RecyclerView recyclerView;
-    private AlertDialog dialog;
     private List<Acquisto> acquisti = new ArrayList<>();
 
     /**
@@ -75,8 +71,6 @@ public class AcquistiFragment extends Fragment implements AsyncResponse, Fragmen
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (dialog != null)
-            dialog.dismiss();
     }
 
     @Override
@@ -93,7 +87,6 @@ public class AcquistiFragment extends Fragment implements AsyncResponse, Fragmen
                 if (!result.getJSONObject(0).getString("nome_premio").equals("null")) {
                     for (int i = 0; i < size; i++) {
                         acquisti.add(new Acquisto(result.getJSONObject(i)));
-
                     }
                 }
             } catch (JSONException e) {
@@ -101,10 +94,10 @@ public class AcquistiFragment extends Fragment implements AsyncResponse, Fragmen
             }
             setAdapter();
         } else {
-            dialog = showAlert(getContext(), dialog, "ERRORE", "C'è stato un errore durante l'acquisizione degli acquisti. Riprovare", true)
+            alertDialog = setAlert("ACQUISTI NON VISUALIZZABILI","C'è stato un errore durante l'ottenimento degli acquisti.",false)
                     .setPositiveButton(android.R.string.ok, null)
                     .create();
-            dialog.show();
+            alertDialog.show();
         }
     }
 

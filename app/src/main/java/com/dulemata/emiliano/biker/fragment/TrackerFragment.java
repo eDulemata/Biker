@@ -15,7 +15,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,13 +23,12 @@ import android.widget.Button;
 import com.dulemata.emiliano.biker.R;
 import com.dulemata.emiliano.biker.activity.MainActivity;
 import com.dulemata.emiliano.biker.activity.SavePercorsoActivity;
+import com.dulemata.emiliano.biker.data.FuoriPercorsoException;
 import com.dulemata.emiliano.biker.data.Percorso;
 import com.dulemata.emiliano.biker.data.Posizione;
-import com.dulemata.emiliano.biker.service.ServiceGPS;
-import com.dulemata.emiliano.biker.service.ServiceNetwork;
+import com.dulemata.emiliano.biker.service.ServiceLocation;
 import com.dulemata.emiliano.biker.util.Keys;
 import com.dulemata.emiliano.biker.views.TrackerProperty;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -45,65 +43,190 @@ import java.lang.ref.WeakReference;
 
 public class TrackerFragment extends FragmentBiker implements OnMapReadyCallback {
 
-    public static final int ZOOM = 18;
-    public static final int TILT = 55;
+    private static boolean isTracking;
+    private static final int ZOOM_GPS = 17;
+    private static final int TILT_GPS = 60;
+    private static final int ZOOM_NETWORK = 18;
+    private static final int TILT_NETWORK = 0;
     private GoogleMap mGoogleMap;
+    private boolean firstFix = true;
+    private Posizione posizioneGPS;
+    private PolylineOptions polylineOptions;
     private WeakReference<MainActivity> reference;
-    public static boolean isTracking;
     private TrackerProperty velocità, altitudine, distanza, punti;
-    private PolylineOptions options;
     private Button tracking_button;
-    private BroadcastReceiver receiver;
-    private Intent intentGps, intentNetwork, getPercorso;
-    private LatLng oldPos;
-    private MarkerOptions mMarkerOption;
     private View.OnClickListener button_listener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if (isTracking) {
-                isTracking = false;
-                stopTracking();
-                setButton();
-                mGoogleMap.clear();
-                options = null;
+                Intent intent = new Intent(Keys.PERCORSO_COMPLETO_SERVICE);
+                reference.get().sendBroadcast(intent);
+                startNetwork();
             } else {
-                LocationManager locationManager = (LocationManager) TrackerFragment.this.reference.get().getSystemService(Context.LOCATION_SERVICE);
-                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    askForGPS();
-                } else {
-                    setupTracking();
-                }
+                if (checkGPS())
+                    startGps();
+            }
+            setButton();
+        }
+    };
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Posizione posizione;
+            Percorso percorso;
+            Float bearing;
+            String action = intent.getAction();
+            switch (action) {
+                case Keys.POSIZIONE_NETWORK:
+                    posizione = intent.getParcelableExtra(Keys.POSIZIONE);
+                    bearing = intent.getFloatExtra(Keys.BEARING, 0);
+                    posizioneNework(posizione, bearing);
+                    break;
+                case Keys.POSIZIONE_GPS:
+                    posizioneGPS = intent.getParcelableExtra(Keys.POSIZIONE);
+                    bearing = intent.getFloatExtra(Keys.BEARING, 0);
+                    percorsoGPS(bearing);
+                    break;
+                case Keys.PERCORSO_COMPLETO:
+                    if ((percorso = intent.getParcelableExtra(Keys.PERCORSO)) != null)
+                        savePercorso(percorso);
+                    else {
+                        alertDialog = setAlert("PERCORSO", "Percorso troppo corto. Non verrà salvato", false)
+                                .setPositiveButton(android.R.string.ok, null).create();
+                        alertDialog.show();
+                    }
+                    mGoogleMap.clear();
+                    isTracking = false;
+                    break;
+                case Keys.PERCORSO_PARZIALE:
+                    if ((percorso = intent.getParcelableExtra(Keys.PERCORSO)) != null)
+                        redrawLine(percorso);
+                    break;
             }
         }
 
     };
 
-    public void setupTracking() {
-        isTracking = true;
-        startTracking();
-        setButton();
+    private void savePercorso(Percorso percorso) {
+        Intent intent = new Intent(reference.get(), SavePercorsoActivity.class);
+        intent.putExtra(Keys.PERCORSO, percorso);
+        startActivity(intent);
     }
 
-    private void askForGPS() {
-        alertDialog = setAlert("PRECISIONE MAGGIORE", "Attivando il GPS la qualità del tracking sarà maggiore", false)
-                .setPositiveButton("attiva", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent gpsOptionsIntent = new Intent(
-                                android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(gpsOptionsIntent);
-                        setupTracking();
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton("continua", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-        alertDialog.show();
+    private void redrawLine(Percorso percorso) {
+        Posizione posizione = null;
+        try {
+            for (int i = 0; i < percorso.size(); i++) {
+                posizione = percorso.getPosizione(i);
+                polylineOptions.add(new LatLng(posizione.latitude, posizione.longitude));
+            }
+        } catch (FuoriPercorsoException e) {
+            e.printStackTrace();
+        }
+        if (posizione != null)
+            getMarker(new LatLng(posizione.latitude, posizione.longitude), 0);
+        mGoogleMap.addPolyline(polylineOptions);
+    }
+
+    private void percorsoGPS(Float bearing) {
+        mGoogleMap.clear();
+        LatLng latLng = new LatLng(posizioneGPS.latitude, posizioneGPS.longitude);
+        MarkerOptions markerOptions = getMarker(latLng, bearing);
+        if (polylineOptions == null) {
+            polylineOptions = new PolylineOptions()
+                    .color(Keys.VERDE)
+                    .width(Keys.SPESSORE_LINEA);
+        }
+        polylineOptions.add(latLng);
+        mGoogleMap.addPolyline(polylineOptions);
+        mGoogleMap.addMarker(markerOptions);
+        cameraGPS(latLng, bearing);
+    }
+
+    private void cameraGPS(LatLng latLng, Float bearing) {
+        CameraPosition cameraPosition = new CameraPosition(
+                latLng,
+                ZOOM_GPS,
+                TILT_GPS,
+                bearing);
+        mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    private MarkerOptions getMarker(LatLng posizione, float direction) {
+        int icon_dimen = getView().findViewById(R.id.map).getWidth() / 10;
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.navigation_icon);
+        Bitmap resized = Bitmap.createScaledBitmap(bitmap, icon_dimen, icon_dimen, false);
+        Paint paint = new Paint();
+        ColorFilter filter = new PorterDuffColorFilter(Keys.VERDE, PorterDuff.Mode.SRC_IN);
+        paint.setColorFilter(filter);
+        Canvas canvas = new Canvas(resized);
+        canvas.drawBitmap(resized, 0, 0, paint);
+        return new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromBitmap(resized))
+                .position(posizione)
+                .draggable(false)
+                .rotation(-45 + direction)
+                .flat(true)
+                .anchor(0.5f, 0.5f);
+    }
+
+    private void posizioneNework(Posizione posizione, Float bearing) {
+        mGoogleMap.clear();
+        LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
+        MarkerOptions markerOptions = getMarker(latLng, bearing);
+        mGoogleMap.addMarker(markerOptions);
+        CameraPosition cameraPosition = new CameraPosition(
+                latLng,
+                ZOOM_NETWORK,
+                TILT_NETWORK,
+                bearing);
+        if (firstFix) {
+            mGoogleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            firstFix = false;
+        } else
+            mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    private void startGps() {
+        Intent intent = new Intent(reference.get(), ServiceLocation.class);
+        intent.setAction(Keys.LOCATION_GPS);
+        reference.get().startService(intent);
+        isTracking = true;
+    }
+
+    private void startNetwork() {
+        Intent intent = new Intent(reference.get(), ServiceLocation.class);
+        intent.setAction(Keys.LOCATION_NETWORK);
+        reference.get().startService(intent);
+        isTracking = false;
+    }
+
+    private boolean checkGPS() {
+        final LocationManager manager = (LocationManager) reference.get().getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            alertDialog = setAlert("PRECISIONE MAGGIORE", "Attivando il GPS la qualità del tracking sarà maggiore", false)
+                    .setPositiveButton("attiva", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent gpsOptionsIntent = new Intent(
+                                    android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(gpsOptionsIntent);
+                            startGps();
+                            dialog.dismiss();
+                        }
+                    })
+                    .setNegativeButton("continua", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startGps();
+                            dialog.dismiss();
+                        }
+                    })
+                    .create();
+            alertDialog.show();
+            return false;
+        }
+        return true;
     }
 
     public TrackerFragment() {
@@ -117,145 +240,16 @@ public class TrackerFragment extends FragmentBiker implements OnMapReadyCallback
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if (savedInstanceState != null)
-            oldPos = savedInstanceState.getParcelable(Keys.OLD_POS);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (oldPos != null) {
-            outState.putParcelable(Keys.OLD_POS, oldPos);
-        }
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        if (intentGps == null)
-            intentGps = new Intent(getActivity(), ServiceGPS.class);
-        if (intentNetwork == null)
-            intentNetwork = new Intent(getActivity(), ServiceNetwork.class);
-        getActivity().startService(intentNetwork);
-        if (receiver == null) {
-            receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    String action = intent.getAction();
-                    Percorso percorso;
-                    Posizione posizione;
-                    switch (action) {
-                        case Keys.PERCORSO_PARZIALE_SERVICE:
-                            percorso = intent.getParcelableExtra(Keys.PERCORSO);
-                            drawPercorso(percorso);
-                            isTracking = true;
-                            setButton();
-                            rimuoviNotifica();
-                            getActivity().stopService(intentNetwork);
-                            break;
-                        case Keys.POSIZIONE_NETWORK:
-                            posizione = intent.getParcelableExtra(Keys.POSIZIONE);
-                            LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
-                            setMarker(latLng, muoviCamera(latLng));
-                            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM));
-                            break;
-                        case Keys.PERCORSO_COMPLETO_SERVICE:
-                            percorso = intent.getParcelableExtra(Keys.PERCORSO_COMPLETO);
-                            startSavePercorso(percorso);
-                            break;
-                        case Keys.POSIZIONE_GPS:
-                            setOptions();
-                            posizione = intent.getParcelableExtra(Keys.POSIZIONE);
-                            int punti = intent.getIntExtra(Keys.PUNTI_GUADAGNATI, -1);
-                            double distanza = intent.getDoubleExtra(Keys.DISTANZA_PARZIALE, -1);
-                            aggiornaTracking(posizione, distanza, punti);
-                            break;
-                    }
-                }
-            };
-        }
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Keys.PERCORSO_PARZIALE_SERVICE);
         filter.addAction(Keys.POSIZIONE_NETWORK);
-        filter.addAction(Keys.PERCORSO_COMPLETO_SERVICE);
         filter.addAction(Keys.POSIZIONE_GPS);
-        getActivity().registerReceiver(receiver, filter);
-        if (getPercorso == null)
-            getPercorso = new Intent(Keys.PERCORSO_PARZIALE_TRACKER);
-        getActivity().sendBroadcast(getPercorso);
-    }
-
-    private void setMarker(LatLng posizione, float v) {
-        mGoogleMap.clear();
-        int icon_dimen = getView().findViewById(R.id.map).getWidth() / 10;
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.navigation_icon);
-        Bitmap resized = Bitmap.createScaledBitmap(bitmap, icon_dimen, icon_dimen, false);
-        Paint paint = new Paint();
-        ColorFilter filter = new PorterDuffColorFilter(Keys.VERDE, PorterDuff.Mode.SRC_IN);
-        paint.setColorFilter(filter);
-        Canvas canvas = new Canvas(resized);
-        canvas.drawBitmap(resized, 0, 0, paint);
-        mMarkerOption = new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromBitmap(resized))
-                .position(posizione)
-                .draggable(false)
-                .rotation(-45 + v)
-                .flat(true)
-                .anchor(0.5f, 0.5f);
-        mGoogleMap.addMarker(mMarkerOption);
-    }
-
-    private void rimuoviNotifica() {
-        Intent intent = new Intent(Keys.REMOVE_NOTIFICA);
-        getActivity().sendBroadcast(intent);
-    }
-
-    private void aggiornaTracking(Posizione posizione, double distanza, int punti) {
-        velocità.update(posizione.velocitàIstantanea);
-        this.distanza.update(distanza);
-        this.punti.update(punti);
-        altitudine.update(posizione.altitudine);
-        addPosizione(posizione);
-    }
-
-    private void startSavePercorso(Percorso percorso) {
-        velocità.update(0);
-        altitudine.update(0);
-        punti.update(0);
-        distanza.update(0);
-        Intent intent = new Intent(getActivity(), SavePercorsoActivity.class);
-        intent.putExtra(Keys.PERCORSO, percorso);
-        startActivity(intent);
-    }
-
-    private float muoviCamera(LatLng posizione) {
-        float angleF = 0;
-        CameraPosition cameraPosition;
-        if (oldPos != null) {
-            Double angle = Math.atan2((posizione.longitude - oldPos.longitude), posizione.latitude - oldPos.latitude);
-            angleF = (float) Math.toDegrees(angle);
-            cameraPosition = CameraPosition.builder().target(posizione).bearing(angleF).tilt(TILT).zoom(ZOOM).build();
-        } else {
-            cameraPosition = CameraPosition.builder().target(posizione).tilt(TILT).zoom(ZOOM).build();
-            oldPos = posizione;
-        }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-        mGoogleMap.animateCamera(cameraUpdate);
-        return angleF;
-    }
-
-    private void setOptions() {
-        if (options == null)
-            options = new PolylineOptions().color(Keys.VERDE).width(15).geodesic(true);
-    }
-
-    private void addPosizione(Posizione posizione) {
-        LatLng latLng = new LatLng(posizione.latitude, posizione.longitude);
-        setMarker(latLng, muoviCamera(latLng));
-        options.add(latLng);
-        mGoogleMap.addPolyline(options);
+        filter.addAction(Keys.PERCORSO_COMPLETO);
+        filter.addAction(Keys.PERCORSO_PARZIALE);
+        reference.get().registerReceiver(receiver, filter);
+        Intent intent = new Intent(Keys.PERCORSO_PARZIALE_SERVICE);
+        reference.get().sendBroadcast(intent);
     }
 
     private void setButton() {
@@ -268,18 +262,10 @@ public class TrackerFragment extends FragmentBiker implements OnMapReadyCallback
         }
     }
 
-    private void drawPercorso(Percorso percorso) {
-        mGoogleMap.clear();
-        setOptions();
-        for (Object elem : percorso) {
-            addPosizione((Posizione) elem);
-        }
-    }
-
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(receiver);
+        reference.get().unregisterReceiver(receiver);
     }
 
     @Override
@@ -294,27 +280,14 @@ public class TrackerFragment extends FragmentBiker implements OnMapReadyCallback
         tracking_button = (Button) v.findViewById(R.id.button_tracking);
         tracking_button.setOnClickListener(button_listener);
         setButton();
+        if (!isTracking)
+            startNetwork();
         return v;
-    }
-
-    private void stopTracking() {
-        getActivity().stopService(intentGps);
-    }
-
-    private void startTracking() {
-        getActivity().stopService(intentNetwork);
-        getActivity().startService(intentGps);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        getActivity().stopService(intentNetwork);
     }
 
 }

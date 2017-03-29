@@ -4,6 +4,7 @@ import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 
 import com.dulemata.emiliano.biker.util.Keys;
 
@@ -18,7 +19,7 @@ import java.util.Locale;
  * Created by Emiliano on 11/03/2017.
  */
 
-public class Posizione implements Parcelable {
+public class Posizione implements Parcelable, Comparable<Posizione> {
 
     public final static Creator<Posizione> CREATOR = new Creator<Posizione>() {
         @Override
@@ -57,8 +58,13 @@ public class Posizione implements Parcelable {
         this.latitude = location.getLatitude();
         this.longitude = location.getLongitude();
         this.altitudine = location.getAltitude();
-        this.velocitàIstantanea = location.getSpeed();
+        this.velocitàIstantanea = toKmH(location.getSpeed());
         this.data = location.getElapsedRealtimeNanos();
+    }
+
+
+    private double toKmH(double velocità) {
+        return velocità * 3.6;
     }
 
     public JSONObject toJsonObject() throws JSONException {
@@ -100,5 +106,13 @@ public class Posizione implements Parcelable {
                 System.currentTimeMillis() - (SystemClock.elapsedRealtimeNanos() / 1000000) + (data / 1000000)
         );
         return dateFormat.format(fixDate);
+    }
+
+    @Override
+    public int compareTo(@NonNull Posizione posizione) {
+        if (this.latitude == posizione.latitude && this.longitude == posizione.longitude) {
+            return 0;
+        }
+        return 1;
     }
 }

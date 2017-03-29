@@ -56,7 +56,6 @@ public class SavePercorsoActivity extends ActivityDialogInteraction implements O
                             })
                             .create();
                     alertDialog.show();
-                    onBackPressed();
                 } else {
                     alertDialog = setAlert("ERRORE SALVATAGGIO", "C'è stato un errore durante l'aggiornamento del profilo. Annullando l'operazione il percorso non verrà salvato.", false)
                             .setPositiveButton("Riprova", new DialogInterface.OnClickListener() {
@@ -121,7 +120,7 @@ public class SavePercorsoActivity extends ActivityDialogInteraction implements O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.save_percorso);
-        TrackerFragment.isTracking = false;
+        //TrackerFragment.isTracking = false;
         preferences = getSharedPreferences(Keys.SHARED_PREFERENCIES, MODE_PRIVATE);
         mappaPercorso = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mappaPercorso != null)

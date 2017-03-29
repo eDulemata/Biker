@@ -40,12 +40,12 @@ public class Keys {
     public static final String PERCORSO_PARZIALE_TRACKER = "percorso_parziale";
     public static final String A_FRAGMENT = "aFragment";
     public static final String JSON_OK = "ok";
-    public static final String POSIZIONE_NETWORK = "posizione_network";
+    public static final String POSIZIONE_NETWORK = "com.dulemata.emiliano.biker.action.posizione_network";
     public static final String POSIZIONE = "posizione";
-    public static final String PERCORSO_PARZIALE_SERVICE = "percorso_parziale_service";
-    public static final String PERCORSO_COMPLETO_SERVICE = "percorso_completo_service";
-    public static final String PERCORSO_COMPLETO = "percorso_completo";
-    public static final String POSIZIONE_GPS = "posizione_gps";
+    public static final String PERCORSO_PARZIALE_SERVICE = "com.dulemata.emiliano.biker.action.percorso_parziale_service";
+    public static final String PERCORSO_COMPLETO_SERVICE = "com.dulemata.emiliano.biker.action.percorso_completo_service";
+    public static final String PERCORSO_COMPLETO = "com.dulemata.emiliano.biker.action.percorso_completo";
+    public static final String POSIZIONE_GPS = "com.dulemata.emiliano.biker.action.posizione_gps";
     public static final String SHOW_NOTIFICA = "show_notifica";
     public static final String REMOVE_NOTIFICA = "remove_notifica";
     public static final String OLD_POS = "old_pos";
@@ -68,14 +68,9 @@ public class Keys {
     public static final String JSON_ACQUISTI = "acquisti";
     public static final String ACQUISTI = "acquisti";
     public static final String VALORE_ACQUISTO = "prezzo_premio";
-    public static final String DIALOG_SHOWING = "dialog_showing";
-    public static final String DIALOG_TITLE = "dialog_title";
-    public static final String DIALOG_MESSAGE = "dialog_message";
-    public static final String DIALOG_CANCELABLE = "dialog_cancelable";
-    public static final String DIALOG_HAS_POSITIVE_BUTTON = "has_positive_button";
-    public static final String DIALOG_HAS_NEGATIVE_BUTTON = "has_negative_button";
-    public static final String DIALOG_POSITIVE_BUTTON = "positive_button";
-    public static final String DIALOG_NEGATIVE_BUTTON = "negative_button";
-    public static final String DIALOG_TAG = "dialog";
-    public static final String DIALOG_LISTENER = "listener";
+    public static final String LOCATION_NETWORK = "com.dulemata.emiliano.biker.action.start_location_service_network";
+    public static final String LOCATION_GPS = "com.dulemata.emiliano.biker.action.start_location_service_gps";
+    public static final String PERCORSO_PARZIALE = "com.dulemata.emiliano.biker.action.percorso_parziale";
+    public static final String BEARING = "bearing";
+    public static final String IS_TRACKING = "is_tracking";
 }

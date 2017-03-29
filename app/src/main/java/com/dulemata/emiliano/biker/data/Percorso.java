@@ -69,29 +69,30 @@ public class Percorso implements Parcelable, Iterable {
         in.readTypedList(mPosizioni, Posizione.CREATOR);
     }
 
-    public void addPosizione(Object posizione) {
-        Posizione p = (Posizione) posizione;
-        size++;
-        if (size == 1) {
+    public void addPosizione(Posizione posizione) {
+        if (size == 0) {
             distanzaTotale = 0;
-            altitudineMedia = p.altitudine;
-            sommaAltitudini = p.altitudine;
+            altitudineMedia = posizione.altitudine;
+            sommaAltitudini = posizione.altitudine;
             puntiGuadagnati = 0;
-            velocitàMedia = toKmH(p.velocitàIstantanea);
+            velocitàMedia = posizione.velocitàIstantanea;
+            mPosizioni.add(posizione);
+            size++;
         } else {
-            distanzaTotale = distanzaTotale + calcolaDistanza(mPosizioni.get(size - 2), p);
-            sommaAltitudini = sommaAltitudini + p.altitudine;
-            sommaVelocità = sommaVelocità + toKmH(p.velocitàIstantanea);
-            altitudineMedia = sommaAltitudini / size;
-            velocitàMedia = sommaVelocità / size;
-            puntiGuadagnati = (int) (distanzaTotale * PUNTI_AL_METRO);
+            if (mPosizioni.get(size - 1).compareTo(posizione) != 0) {
+                distanzaTotale = distanzaTotale + calcolaDistanza(mPosizioni.get(size - 1), posizione);
+                sommaAltitudini = sommaAltitudini + posizione.altitudine;
+                sommaVelocità = sommaVelocità + posizione.velocitàIstantanea;
+                altitudineMedia = sommaAltitudini / size;
+                velocitàMedia = sommaVelocità / size;
+                puntiGuadagnati = (int) (distanzaTotale * PUNTI_AL_METRO);
+                mPosizioni.add(posizione);
+                size++;
+            }
         }
-        mPosizioni.add(p);
+
     }
 
-    private double toKmH(double velocità) {
-        return velocità * 3.6;
-    }
 
     public Posizione getPosizione(int i) throws FuoriPercorsoException {
         if (i > size()) {
